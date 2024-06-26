@@ -52,7 +52,7 @@ This project has a [dev container configuration](.devcontainer/), which makes it
     # Run database migrations
     python3 manage.py migrate
     # Start the development server
-    python3 manage.py runserver
+    python3 manage.py runserver 8080
     ```
 
 1. When you see the message `Your application running on port 8000 is available.`, click **Open in Browser**.
