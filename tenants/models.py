@@ -1,5 +1,5 @@
 from django.db import models
-from django_tenants.models import TenantMixin, DomainMixin  # Εισαγωγή από την django_tenants
+from django_tenants.models import TenantMixin, DomainMixin
 
 class Tenant(TenantMixin):
     name = models.CharField(max_length=100, unique=True)
@@ -16,7 +16,7 @@ class Tenant(TenantMixin):
             Domain.objects.create(domain=domain_name, tenant=self, is_primary=True)
 
 class Domain(DomainMixin):
-    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE)  # Διορθώστε τη σχέση
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE)
     # Μπορείτε να προσθέσετε επιπλέον πεδία εδώ αν χρειάζεται
 
 class Subscription(models.Model):

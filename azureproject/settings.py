@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from django_tenants.utils import get_public_schema_name
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -14,7 +13,7 @@ if 'CODESPACE_NAME' in os.environ:
     CSRF_TRUSTED_ORIGINS = [f'https://{os.getenv("CODESPACE_NAME")}-8000.{os.getenv("GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN")}']
 
 SHARED_APPS = [
-    'django_tenants.apps.DjangoTenantsConfig',
+    'django_tenants',
     'restaurant_review.apps.RestaurantReviewConfig',
     'tenants.apps.TenantsConfig',
     'authentication.apps.AuthenticationConfig',
@@ -28,11 +27,10 @@ SHARED_APPS = [
 
 TENANT_APPS = [
     'tables.apps.TablesConfig',
+    # 'django.contrib.contenttypes',  # πρέπει να περιλαμβάνεται και στις δύο λίστες
 ]
 
-
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
-
 
 MIDDLEWARE = [
     'django_tenants.middleware.main.TenantMainMiddleware',
@@ -48,8 +46,8 @@ MIDDLEWARE = [
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 ROOT_URLCONF = 'azureproject.urls'
 
-TENANT_MODEL = "restaurant_review.Client"  # app.Model
-TENANT_DOMAIN_MODEL = "restaurant_review.Domain"  # app.Model
+TENANT_MODEL = "tenants.Tenant"  # app.Model
+TENANT_DOMAIN_MODEL = "tenants.Domain"  # app.Model
 
 DATABASES = {
     'default': {
@@ -64,6 +62,8 @@ DATABASES = {
 DATABASE_ROUTERS = (
     'django_tenants.routers.TenantSyncRouter',
 )
+
+AUTH_USER_MODEL = 'authentication.CustomUser'  # Χρήση του CustomUser μοντέλου
 
 AUTH_PASSWORD_VALIDATORS = [
     {
