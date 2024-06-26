@@ -9,8 +9,19 @@ ALLOWED_HOSTS = [os.environ['WEBSITE_HOSTNAME']] if 'WEBSITE_HOSTNAME' in os.env
 CSRF_TRUSTED_ORIGINS = ['https://' + os.environ['WEBSITE_HOSTNAME']] if 'WEBSITE_HOSTNAME' in os.environ else []
 DEBUG = False
 
+
+INSTALLED_APPS += [
+    'tables.apps.TablesConfig',
+    'tenants.apps.TenantsConfig',
+    'authentication.apps.AuthenticationConfig',
+]
+
+
+
+
 # WhiteNoise configuration
 MIDDLEWARE = [
+    'django_tenants.middleware.main.TenantMainMiddleware',
     'django.middleware.security.SecurityMiddleware',
     # Add whitenoise middleware after the security middleware
     'whitenoise.middleware.WhiteNoiseMiddleware',
