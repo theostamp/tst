@@ -807,6 +807,7 @@ def get_orders(request):
 
 
 @csrf_exempt
+
 def table_selection_with_time_diff(request):
     tenant = connection.get_tenant()
     tenant_name = tenant.name
@@ -884,38 +885,6 @@ def get_time_diff_from_file(tenant_name, table_number):
                 continue
 
     return 'N/A'
-
-
-
-
-
-def get_time_diff_from_file(tenant_name, table_number):
-    folder_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant_name}_received_orders')
-
-    if not os.path.exists(folder_path):
-        logger.error(f"Received orders folder not found: {folder_path}")
-        return 'N/A'
-
-    for filename in sorted(os.listdir(folder_path)):
-        if filename.endswith('.json') and f"order_table_{table_number}_" in filename:
-            file_path = os.path.join(folder_path, filename)
-            try:
-                with open(file_path, 'r') as file:
-                    order_data = json.load(file)
-                    time_diff = order_data.get('time_diff')
-                    if time_diff is not None:
-                        hours, minutes = divmod(time_diff, 60)
-                        return f"{int(hours):02}:{int(minutes):02}"
-            except json.JSONDecodeError as e:
-                logger.error(f"Error decoding JSON from {file_path}: {e}")
-                continue
-            except Exception as e:
-                logger.error(f"Error reading file {file_path}: {e}")
-                continue
-
-    return 'N/A'
-
-
 
 
 
