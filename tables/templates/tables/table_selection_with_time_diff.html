@@ -140,16 +140,6 @@
                 }
             }
 
-            function convertDurationToHHMM(duration) {
-                const parts = duration.split(':');
-                if (parts.length >= 2) {
-                    const hours = parseInt(parts[0], 10);
-                    const minutes = parseInt(parts[1], 10);
-                    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-                }
-                return duration;
-            }
-
             function createTableButtons(tables, positions) {
                 const container = document.querySelector('.tables-container');
                 container.innerHTML = '';
@@ -266,12 +256,10 @@
                 container.style.height = `${height}px`;
             }
 
-            // Ανανέωση των δεδομένων κάθε 10 δευτερόλεπτα χωρίς ανανέωση της σελίδας
             setInterval(() => {
                 const tenant = getTenantFromHostname();
                 loadTables(tenant);
             }, 10000);
-
         };
 
         function getTenantFromHostname() {
