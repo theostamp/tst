@@ -162,11 +162,45 @@ def table_selection(request):
 
     try:
         with open(occupied_tables_file, 'r') as file:
-            tables_data = json.load(file)
-            return render(request, 'tables/table_selection.html', {'tables': tables_data})
+            data = json.load(file)
+
+            # Ελέγξτε αν το data περιέχει το κλειδί "tables"
+            if "tables" not in data:
+                logger.error(f"'tables' key not found in the JSON file: {occupied_tables_file}")
+                return HttpResponseNotFound("'tables' key not found in the JSON file")
+
+            tables_data = data["tables"]
+
+            # Προσθήκη καταγραφής για να δούμε τα δεδομένα
+            logger.debug(f"Loaded tables data: {tables_data}")
+
+            # Καθαρισμός και επικύρωση δεδομένων
+            valid_tables = []
+            for table in tables_data:
+                if isinstance(table, dict):
+                    table_number = table.get('table_number')
+                    if table_number:
+                        try:
+                            table_number = int(table_number)  # Επικύρωση ότι είναι ακέραιος
+                            table['table_number'] = table_number
+                            valid_tables.append(table)
+                        except ValueError:
+                            logger.error(f"Invalid table number: {table_number}")
+                    else:
+                        logger.error("Table number not found in table data")
+                else:
+                    logger.error(f"Invalid table format: expected dict, got {type(table).__name__}")
+
+            return render(request, 'tables/table_selection.html', {'tables': valid_tables})
     except FileNotFoundError:
-        # Εδώ μπορείτε να χειριστείτε την περίπτωση που το αρχείο δεν βρίσκεται
+        logger.error(f"Occupied tables file not found: {occupied_tables_file}")
         return HttpResponseNotFound('File not found')
+    except json.JSONDecodeError as e:
+        logger.error(f"Error decoding JSON from {occupied_tables_file}: {e}")
+        return HttpResponseNotFound('Error decoding JSON file')
+
+
+@csrf_exempt
 
 @csrf_exempt
 def order_for_table(request, table_number):
@@ -174,23 +208,55 @@ def order_for_table(request, table_number):
     Επεξεργάζεται και εμφανίζει τις πληροφορίες παραγγελίας για ένα συγκεκριμένο τραπέζι,
     διαχωρίζοντας τα προϊόντα ανά κατηγορία.
     """
-    schema_name = connection.get_schema()
-    username = connection.get_tenant()
+    tenant = connection.get_tenant()
+    tenant_name = tenant.name
+
     # Φόρτωση δεδομένων από το JSON αρχείο
-    products_file_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{username}_upload_json', 'products.json')
-    with open(products_file_path, 'r') as file:
-        products_data = json.load(file)
+    products_file_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant_name}_upload_json', 'products.json')
+
+    try:
+        with open(products_file_path, 'r') as file:
+            data = json.load(file)
+
+        logger.debug(f"Loaded products data: {data}")
+
+        # Ελέγξτε αν το data περιέχει το κλειδί "products"
+        if "products" not in data:
+            logger.error(f"'products' key not found in the JSON file: {products_file_path}")
+            return HttpResponseBadRequest("'products' key not found in the JSON file")
+
+        products_data = data["products"]
+
+        # Επικύρωση της μορφής των δεδομένων
+        if not isinstance(products_data, list):
+            logger.error(f"Invalid data format: expected list, got {type(products_data).__name__}")
+            return HttpResponseBadRequest('Invalid data format')
+
         categorized_products = {}
-    for product in products_data:
-        category = product['category']
-        if category not in categorized_products:
-            categorized_products[category] = []
-        categorized_products[category].append(product)
+        for product in products_data:
+            if not isinstance(product, dict):
+                logger.error(f"Invalid product format: expected dict, got {type(product).__name__}")
+                continue
 
-    # Πάρτε μόνο τις πρώτες τρεις κατηγορίες
-    first_three_categories = dict(list(categorized_products.items())[:3])
-    return render(request, 'tables/order_for_table.html', {'table_number': table_number, 'categories': first_three_categories})
+            category = product.get('category')
+            if category is None:
+                logger.error(f"Product category not found in product data: {product}")
+                continue
 
+            if category not in categorized_products:
+                categorized_products[category] = []
+            categorized_products[category].append(product)
+
+        # Πάρτε μόνο τις πρώτες τρεις κατηγορίες
+        first_three_categories = dict(list(categorized_products.items())[:3])
+        return render(request, 'tables/order_for_table.html', {'table_number': table_number, 'categories': first_three_categories})
+
+    except FileNotFoundError:
+        logger.error(f"Products file not found: {products_file_path}")
+        return HttpResponseNotFound('Products file not found')
+    except json.JSONDecodeError as e:
+        logger.error(f"Error decoding JSON from {products_file_path}: {e}")
+        return HttpResponseBadRequest('Error decoding JSON file')
 
 
 
@@ -455,19 +521,41 @@ def order_summary(request):
 
     return render(request, 'tables/order_summary.html', {'sorted_orders_by_table': sorted_orders_by_table})
 
+
 @csrf_exempt
 def load_products(tenant):
     tenant_folder = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant.name}_upload_json')
     products_file = os.path.join(tenant_folder, 'products.json')
 
     if not os.path.exists(products_file):
+        logger.error(f"Products file not found: {products_file}")
         return {}
 
-    with open(products_file, 'r') as file:
-        products_data = json.load(file)
-        return {str(product['id']): product for product in products_data}
+    try:
+        with open(products_file, 'r') as file:
+            data = json.load(file)
+        
+        # Ελέγξτε αν το data περιέχει το κλειδί "products"
+        if "products" not in data:
+            logger.error(f"'products' key not found in the JSON file: {products_file}")
+            return {}
 
-@csrf_exempt
+        products_data = data["products"]
+
+        # Επικύρωση της μορφής των δεδομένων
+        if not isinstance(products_data, list):
+            logger.error(f"Invalid data format: expected list, got {type(products_data).__name__}")
+            return {}
+
+        return {str(product['id']): product for product in products_data if isinstance(product, dict)}
+
+    except json.JSONDecodeError as e:
+        logger.error(f"Error decoding JSON from {products_file}: {e}")
+        return {}
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return {}
+
 def submit_order(request, table_number=None):
     tenant = connection.get_tenant()
     products_dict = load_products(tenant)
@@ -505,23 +593,22 @@ def submit_order(request, table_number=None):
                     time_diff = int((datetime.now() - datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")).total_seconds() // 60)
                     new_order_data['time_diff'] = time_diff
 
-                # Εδώ χρησιμοποιούμε το όνομα του tenant για να δημιουργήσουμε το σωστό μονοπάτι
-                folder_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant.name}_received_orders')
-                file_path = os.path.join(folder_path, filename)
+                    # Εδώ χρησιμοποιούμε το όνομα του tenant για να δημιουργήσουμε το σωστό μονοπάτι
+                    folder_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant.name}_received_orders')
+                    file_path = os.path.join(folder_path, filename)
 
-                if not os.path.exists(folder_path):
-                    os.makedirs(folder_path)
+                    if not os.path.exists(folder_path):
+                        os.makedirs(folder_path)
 
-                with open(file_path, 'w') as file:
-                    json.dump(new_order_data, file)
+                    with open(file_path, 'w') as file:
+                        json.dump(new_order_data, file)
 
             return JsonResponse({'status': 'success', 'message': 'Η παραγγελία υποβλήθηκε με επιτυχία'})
         except Exception as e:
-            logging.error(f"Γενικό σφάλμα: {e}")
+            logger.error(f"Γενικό σφάλμα: {e}")
             return JsonResponse({'status': 'error', 'message': str(e)})
 
     return JsonResponse({'status': 'error', 'message': 'Μη έγκυρο αίτημα'})
-
 
 @csrf_exempt
 def update_order_status_in_json(order_id, new_status=1):

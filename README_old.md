@@ -29,7 +29,10 @@
 
     <!-- pip install daphne -->
     pip install gunicorn
+     
 
+
+     pip install -r requirements.txt
   
 
 ## To run the server, run the following command:
@@ -98,7 +101,7 @@ docker-compose logs -f
 cd rest_order
 git init
 git add .
-git commit -m "Initial 16 commit"
+git commit -m "Initial new commit"
 git remote add origin https://github.com/theostamp/dinesight
 git push -u origin main --force
 
