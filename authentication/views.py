@@ -13,6 +13,7 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 import os
 import logging
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 logger = logging.getLogger('django')
 
@@ -20,6 +21,11 @@ User = get_user_model()
 
 def home(request):
     return render(request, 'index.html')
+
+
+@ensure_csrf_cookie
+def get_csrf_token(request):
+    return JsonResponse({'csrfToken': request.META.get('CSRF_COOKIE')})
 
 @login_required
 def user_credits(request):

@@ -14,9 +14,21 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path 
+from tables import views as tables_views  
+from authentication.views import register
+# from azureproject import views 
 
 urlpatterns = [
-    path('', include('restaurant_review.urls')),
+ 
+
+   
+
+    path('tables/', include('tables.urls')), 
+    path('', include('tables.urls')),  
     path('admin/', admin.site.urls),
+    path('authentication/', include('authentication.urls')),
+    # path('', views.index, name='index'),
+    # path('', include('main.urls')),  # Κεντρική διαδρομή για την εφαρμογή main
+
 ]

@@ -83,7 +83,7 @@ python manage.py collectstatic
     daphne -u /tmp/daphne1.sock -b 0.0.0.0 -p 8003 rest_order.asgi:application    
 
 
-    python manage.py runserver 8003
+    python manage.py runserver 8080
 
 
 docker system prune -a
@@ -96,7 +96,7 @@ docker-compose logs -f
 cd rest_order
 git init
 git add .
-git commit -m "Initial 4 commit"
+git commit -m "Initial 12 commit"
 git remote add origin https://github.com/theostamp/dinesight
 git push -u origin main --force
 
