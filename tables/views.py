@@ -803,11 +803,18 @@ def get_orders(request):
     
     return JsonResponse(order_data, safe=False)
 
+
+
+
+@csrf_exempt
 def table_selection_with_time_diff(request):
     tenant = connection.get_tenant()
     tenant_name = tenant.name
 
     occupied_tables_file = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant_name}_upload_json', 'occupied_tables.json')
+
+    # Καταγραφή της διαδρομής για επιβεβαίωση
+    logger.debug(f"Occupied tables file path: {occupied_tables_file}")
 
     if not os.path.exists(occupied_tables_file):
         logger.error(f"Occupied tables file not found: {occupied_tables_file}")
@@ -815,7 +822,14 @@ def table_selection_with_time_diff(request):
 
     try:
         with open(occupied_tables_file, 'r') as file:
-            tables_data = json.load(file)
+            data = json.load(file)
+
+            # Ελέγξτε αν το data περιέχει το κλειδί "tables"
+            if "tables" not in data:
+                logger.error(f"'tables' key not found in the JSON file: {occupied_tables_file}")
+                return HttpResponseNotFound("'tables' key not found in the JSON file")
+
+            tables_data = data["tables"]
 
             # Έλεγχος αν το tables_data είναι λίστα
             if not isinstance(tables_data, list):
@@ -870,6 +884,42 @@ def get_time_diff_from_file(tenant_name, table_number):
                 continue
 
     return 'N/A'
+
+
+
+
+
+def get_time_diff_from_file(tenant_name, table_number):
+    folder_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant_name}_received_orders')
+
+    if not os.path.exists(folder_path):
+        logger.error(f"Received orders folder not found: {folder_path}")
+        return 'N/A'
+
+    for filename in sorted(os.listdir(folder_path)):
+        if filename.endswith('.json') and f"order_table_{table_number}_" in filename:
+            file_path = os.path.join(folder_path, filename)
+            try:
+                with open(file_path, 'r') as file:
+                    order_data = json.load(file)
+                    time_diff = order_data.get('time_diff')
+                    if time_diff is not None:
+                        hours, minutes = divmod(time_diff, 60)
+                        return f"{int(hours):02}:{int(minutes):02}"
+            except json.JSONDecodeError as e:
+                logger.error(f"Error decoding JSON from {file_path}: {e}")
+                continue
+            except Exception as e:
+                logger.error(f"Error reading file {file_path}: {e}")
+                continue
+
+    return 'N/A'
+
+
+
+
+
+
 
 def get_occupied_tables(request, tenant):
     tenant_folder = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant}_upload_json')
