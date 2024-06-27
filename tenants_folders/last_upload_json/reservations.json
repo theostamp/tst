@@ -1,0 +1,52 @@
+{
+    "reservations": [
+        {
+            "id": 69,
+            "name": "etwrt",
+            "phone": "",
+            "table_number": 1,
+            "date": "2024-06-15",
+            "time": "00:00"
+        },
+        {
+            "id": 70,
+            "name": "etwrt",
+            "phone": "",
+            "table_number": 1,
+            "date": "2024-06-15",
+            "time": "00:00"
+        },
+        {
+            "id": 71,
+            "name": "fdsfsfds",
+            "phone": "",
+            "table_number": 3,
+            "date": "2024-06-15",
+            "time": "00:00"
+        },
+        {
+            "id": 72,
+            "name": "ρτετυυρτ",
+            "phone": "",
+            "table_number": 2,
+            "date": "2024-06-15",
+            "time": "00:00"
+        },
+        {
+            "id": 73,
+            "name": "gfdsgdfgsdf",
+            "phone": "",
+            "table_number": 1,
+            "date": "2024-06-17",
+            "time": "00:00"
+        },
+        {
+            "id": 74,
+            "name": "gdfgsdfgd",
+            "phone": "",
+            "table_number": 4,
+            "date": "2024-06-17",
+            "time": "00:00"
+        }
+    ]
+}

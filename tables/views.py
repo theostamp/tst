@@ -691,8 +691,22 @@ def table_selection_with_time_diff(request):
         with open(occupied_tables_file, 'r') as file:
             tables_data = json.load(file)
 
+            # Έλεγχος αν το tables_data είναι λίστα
+            if not isinstance(tables_data, list):
+                logger.error(f"Invalid data format: expected list, got {type(tables_data).__name__}")
+                return HttpResponseNotFound('Invalid data format')
+
             for table in tables_data:
-                table_number = table['table_number']
+                # Έλεγχος αν το table είναι dictionary
+                if not isinstance(table, dict):
+                    logger.error(f"Invalid table format: expected dict, got {type(table).__name__}")
+                    return HttpResponseNotFound('Invalid table format')
+
+                table_number = table.get('table_number')
+                if table_number is None:
+                    logger.error("Table number not found in table data")
+                    return HttpResponseNotFound('Table number not found in table data')
+
                 time_diff = get_time_diff_from_file(tenant_name, table_number)
                 table['time_diff'] = time_diff
 
@@ -703,6 +717,7 @@ def table_selection_with_time_diff(request):
     except json.JSONDecodeError as e:
         logger.error(f"Error decoding JSON from {occupied_tables_file}: {e}")
         return HttpResponseNotFound('Error decoding JSON file')
+
 
 def get_time_diff_from_file(tenant_name, table_number):
     folder_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant_name}_received_orders')
