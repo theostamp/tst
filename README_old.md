@@ -102,11 +102,11 @@ cd rest_order
 git init
 git add .
 git commit -m "Initial new commit"
-git remote add origin https://github.com/theostamp/dinesight
+git remote add origin https://github.com/theostamp/tst.git
 git push -u origin main --force
 
 cd rest_order
 git add .
 git commit -m "ver 1.0.1"
-git remote add origin https://github.com/theostamp/dinesight
+git remote add origin https://github.com/theostamp/tst.git
 git push -u origin main
