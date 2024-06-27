@@ -803,15 +803,13 @@ def get_orders(request):
     
     return JsonResponse(order_data, safe=False)
 
-
-
-
 @csrf_exempt
 def table_selection_with_time_diff(request):
     tenant = connection.get_tenant()
     tenant_name = tenant.name
 
-    occupied_tables_file = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant_name}_upload_json', 'occupied_tables.json')
+    # Καθορισμός της διαδρομής προς το αρχείο
+    occupied_tables_file = os.path.join('/workspace/tenants_folders', f'{tenant_name}_upload_json', 'occupied_tables.json')
 
     logger.debug(f"Occupied tables file path: {occupied_tables_file}")
 
@@ -854,9 +852,8 @@ def table_selection_with_time_diff(request):
         logger.error(f"Error decoding JSON from {occupied_tables_file}: {e}")
         return HttpResponseNotFound('Error decoding JSON file')
 
-
 def get_time_diff_from_file(tenant_name, table_number):
-    folder_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant_name}_received_orders')
+    folder_path = os.path.join('/workspace/tenants_folders', f'{tenant_name}_received_orders')
 
     if not os.path.exists(folder_path):
         logger.error(f"Received orders folder not found: {folder_path}")
@@ -880,8 +877,6 @@ def get_time_diff_from_file(tenant_name, table_number):
                 continue
 
     return 'N/A'
-
-
 
 
 def get_occupied_tables(request, tenant):
