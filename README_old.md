@@ -75,7 +75,7 @@ print(Domain.objects.all())
 
 
 
-    python manage.py runserver 8080
+    python manage.py runserver 8081
 
 
 
@@ -101,7 +101,7 @@ docker-compose logs -f
 cd rest_order
 git init
 git add .
-git commit -m "N4"
+git commit -m "N5"
 git remote add origin https://github.com/theostamp/tst.git
 git push -u origin main --force
 

@@ -120,5 +120,5 @@ TEMPLATES = [
 
 
 TENANTS_BASE_FOLDER = os.path.join(BASE_DIR, 'tenants_folders')
-CSRF_TRUSTED_ORIGINS = ['http://localhost:8080']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:8081']
 CSRF_COOKIE_SECURE = False  # Απενεργοποίησε αν δεν χρησιμοποιείς HTTPS τοπικά
