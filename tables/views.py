@@ -803,6 +803,9 @@ def get_orders(request):
     
     return JsonResponse(order_data, safe=False)
 
+
+
+
 @csrf_exempt
 def table_selection_with_time_diff(request):
     tenant = connection.get_tenant()
@@ -844,13 +847,14 @@ def table_selection_with_time_diff(request):
                 time_diff = get_time_diff_from_file(tenant_name, table_number)
                 table['time_diff'] = time_diff
 
-            return render(request, 'tables/table_selection_with_time_diff.html', {'tables': tables_data})
+            return JsonResponse({'tables': tables_data})
     except FileNotFoundError:
         logger.error(f"File not found: {occupied_tables_file}")
         return HttpResponseNotFound('File not found')
     except json.JSONDecodeError as e:
         logger.error(f"Error decoding JSON from {occupied_tables_file}: {e}")
         return HttpResponseNotFound('Error decoding JSON file')
+
 
 def get_time_diff_from_file(tenant_name, table_number):
     folder_path = os.path.join('/workspace/tenants_folders', f'{tenant_name}_received_orders')
@@ -877,6 +881,9 @@ def get_time_diff_from_file(tenant_name, table_number):
                 continue
 
     return 'N/A'
+
+
+
 
 
 def get_occupied_tables(request, tenant):
