@@ -204,6 +204,7 @@ def table_selection(request):
 
 
 
+
 @csrf_exempt
 def order_for_table(request, table_number):
     """
@@ -262,6 +263,7 @@ def order_for_table(request, table_number):
 
 
 
+@csrf_exempt
 def success(request):
     return render(request, 'tables/success.html')
 
@@ -280,6 +282,9 @@ def list_order_files(request, tenant):
     else:
         return JsonResponse({'status': 'error', 'message': 'Directory not found'}, status=404)
 
+
+
+@csrf_exempt
 def serve_order_file(request, tenant, filename):
     folder_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant}_received_orders')
     file_path = os.path.join(folder_path, filename)
@@ -290,6 +295,13 @@ def serve_order_file(request, tenant, filename):
             return JsonResponse(data)
     else:
         return HttpResponseNotFound('File not found')
+
+
+
+
+
+
+
 
 @csrf_exempt
 def get_order(request, tenant, filename):
@@ -352,6 +364,9 @@ def update_product_status(request):
         logger.error("Λάθος μέθοδος αιτήματος")
         return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
 
+
+
+
 @csrf_exempt
 def list_orders(request):
     """
@@ -374,6 +389,9 @@ def list_orders(request):
                 orders_by_table[table_number]['orders'].append(order)
 
     return render(request, 'tables/list_orders.html', {'orders_by_table': orders_by_table})
+
+
+
 
 @csrf_exempt
 def get_orders_json(request):
@@ -399,6 +417,11 @@ def get_orders_json(request):
     print("Η επεξεργασία του φακέλου ολοκληρώθηκε.")
     return JsonResponse({'orders': orders})
 
+
+
+
+
+
 @csrf_exempt
 def get_json(request):
     """
@@ -411,6 +434,8 @@ def get_json(request):
     else:
         return JsonResponse({'status': 'error', 'message': 'Directory not found'}, status=404)
 
+
+
 @csrf_exempt
 def products_json(request):
     """
@@ -419,6 +444,8 @@ def products_json(request):
     with open(os.path.join(settings.BASE_DIR, 'upload_json', 'products.json'), 'r') as file:
         data = json.load(file)
         return JsonResponse(data)
+
+
 
 @csrf_exempt
 def process_orders(folder_path, output_file):
@@ -460,6 +487,9 @@ def process_orders(folder_path, output_file):
     with open(output_file, 'w') as file:
         json.dump(all_orders, file)
 
+
+
+@csrf_exempt
 def order_summary(request):
     schema_name = connection.get_schema()
     tenant = connection.get_tenant()
@@ -524,6 +554,7 @@ def order_summary(request):
     return render(request, 'tables/order_summary.html', {'sorted_orders_by_table': sorted_orders_by_table})
 
 
+
 @csrf_exempt
 def load_products(tenant):
     tenant_folder = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant.name}_upload_json')
@@ -557,7 +588,10 @@ def load_products(tenant):
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
         return {}
+    
 
+
+@csrf_exempt
 def submit_order(request, table_number=None):
     tenant = connection.get_tenant()
     products_dict = load_products(tenant)
@@ -611,6 +645,9 @@ def submit_order(request, table_number=None):
             return JsonResponse({'status': 'error', 'message': str(e)})
 
     return JsonResponse({'status': 'error', 'message': 'Μη έγκυρο αίτημα'})
+
+
+
 
 @csrf_exempt
 def update_order_status_in_json(order_id, new_status=1):

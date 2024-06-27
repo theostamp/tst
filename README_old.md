@@ -101,7 +101,7 @@ docker-compose logs -f
 cd rest_order
 git init
 git add .
-git commit -m "N1"
+git commit -m "N2"
 git remote add origin https://github.com/theostamp/tst.git
 git push -u origin main --force
 
