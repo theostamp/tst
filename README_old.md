@@ -101,7 +101,7 @@ docker-compose logs -f
 cd rest_order
 git init
 git add .
-git commit -m "Initial new commit"
+git commit -m "Initial new 1 commit"
 git remote add origin https://github.com/theostamp/tst.git
 git push -u origin main --force
 
