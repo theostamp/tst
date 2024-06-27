@@ -124,7 +124,7 @@
 
             async function loadTables(tenant) {
                 try {
-                    const url = `/table_selection_with_time_diff/`;
+                    const url = `/tables/table_selection_with_time_diff/`;
                     console.log(`Fetching data from: ${url}`);
                     const response = await fetch(url);
                     if (!response.ok) {
@@ -133,6 +133,7 @@
                     const data = await response.json();
                     const tables = data.tables;
                     console.log('Tables data:', tables);
+                    await loadTimeDiffs(tables, tenant);
                     const positions = await loadButtonPositions();
                     createTableButtons(tables, positions);
                 } catch (error) {

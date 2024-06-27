@@ -808,6 +808,34 @@ def get_orders(request):
 
 @csrf_exempt
 
+@csrf_exempt
+def table_selection_with_time_diff(request):
+    tenant = connection.get_tenant()
+    tenant_name = tenant.name
+
+    occupied_tables_file = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant_name}_upload_json', 'occupied_tables.json')
+
+    if not os.path.exists(occupied_tables_file):
+        logger.error(f"Occupied tables file not found: {occupied_tables_file}")
+        return HttpResponseNotFound(f'Occupied tables file not found: {occupied_tables_file}')
+
+    try:
+        with open(occupied_tables_file, 'r') as file:
+            tables_data = json.load(file)
+
+            for table in tables_data["tables"]:
+                table_number = table['table_number']
+                time_diff = get_time_diff_from_file(tenant_name, table_number)
+                table['time_diff'] = time_diff
+
+            return JsonResponse({'tables': tables_data["tables"]})
+    except FileNotFoundError:
+        logger.error(f"File not found: {occupied_tables_file}")
+        return HttpResponseNotFound('File not found')
+    except json.JSONDecodeError as e:
+        logger.error(f"Error decoding JSON from {occupied_tables_file}: {e}")
+        return HttpResponseNotFound('Error decoding JSON file')
+
 def get_time_diff_from_file(tenant_name, table_number):
     folder_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant_name}_received_orders')
 
@@ -834,50 +862,7 @@ def get_time_diff_from_file(tenant_name, table_number):
 
     return 'N/A'
 
-def table_selection_with_time_diff(request):
-    tenant = connection.get_tenant()
-    tenant_name = tenant.name
-
-    occupied_tables_file = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant_name}_upload_json', 'occupied_tables.json')
-
-    if not os.path.exists(occupied_tables_file):
-        logger.error(f"Occupied tables file not found: {occupied_tables_file}")
-        return HttpResponseNotFound(f'Occupied tables file not found: {occupied_tables_file}')
-
-    try:
-        with open(occupied_tables_file, 'r') as file:
-            data = json.load(file)
-
-            if "tables" not in data:
-                logger.error(f"'tables' key not found in the JSON file: {occupied_tables_file}")
-                return HttpResponseNotFound("'tables' key not found in the JSON file")
-
-            tables_data = data["tables"]
-
-            if not isinstance(tables_data, list):
-                logger.error(f"Invalid data format: expected list, got {type(tables_data).__name__}")
-                return HttpResponseNotFound('Invalid data format')
-
-            for table in tables_data:
-                if not isinstance(table, dict):
-                    logger.error(f"Invalid table format: expected dict, got {type(table).__name__}")
-                    return HttpResponseNotFound('Invalid table format')
-
-                table_number = table.get('table_number')
-                if table_number is None:
-                    logger.error("Table number not found in table data")
-                    return HttpResponseNotFound('Table number not found in table data')
-
-                time_diff = get_time_diff_from_file(tenant_name, table_number)
-                table['time_diff'] = time_diff
-
-            return render(request, 'tables/table_selection_with_time_diff.html', {'tables': tables_data})
-    except FileNotFoundError:
-        logger.error(f"File not found: {occupied_tables_file}")
-        return HttpResponseNotFound('File not found')
-    except json.JSONDecodeError as e:
-        logger.error(f"Error decoding JSON from {occupied_tables_file}: {e}")
-        return HttpResponseNotFound('Error decoding JSON file')
+        
 
 def get_occupied_tables(request, tenant):
     tenant_folder = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant}_upload_json')
