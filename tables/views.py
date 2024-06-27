@@ -116,34 +116,39 @@ def delete_received_orders(request, tenant):
         response_data['errors'].append(str(e))
         return JsonResponse(response_data, status=500)
 
+
+
+
+
 @csrf_exempt
+
 def upload_json(request, username):
-    tenant_folder = f'workspace/tenants_folders/{username}_upload_json'
-    os.makedirs(tenant_folder, exist_ok=True)
+    if request.method != 'POST':
+        logger.error("Invalid request method")
+        return HttpResponseBadRequest("Invalid request method")
 
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            # Προσθήκη χειρισμού για το 'occupied_tables'
-            file_type = next((k for k in data if k in ['products', 'tables', 'occupied_tables']), None)
-            if not file_type:
-                return JsonResponse({'status': 'error', 'message': 'Unknown file type'}, status=400)
+    try:
+        # Ελέγξε αν τα δεδομένα POST περιέχουν το αρχείο
+        if 'file' not in request.FILES:
+            logger.error("No file found in request")
+            return HttpResponseBadRequest("No file found in request")
 
-            # Μετονομασία κλειδιού 'tables' σε 'occupied_tables' κατά την αποθήκευση
-            file_name = f"{file_type.replace('tables', 'occupied_tables')}.json"
-            file_path = os.path.join(tenant_folder, file_name)
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        tenant_folder = os.path.join(settings.TENANTS_BASE_FOLDER, f'{username}_upload_json')
+        os.makedirs(tenant_folder, exist_ok=True)
 
-            with open(file_path, 'w') as file:
-                json.dump(data[file_type], file, indent=4)
+        # Εδώ προσθέτουμε λογική για αποθήκευση του αρχείου
+        uploaded_file = request.FILES['file']
+        file_path = os.path.join(tenant_folder, uploaded_file.name)
+        with open(file_path, 'wb+') as destination:
+            for chunk in uploaded_file.chunks():
+                destination.write(chunk)
 
-            return JsonResponse({'status': 'success'})
-        except json.JSONDecodeError:
-            return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+        logger.info(f"File {uploaded_file.name} uploaded successfully to {tenant_folder}")
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        logger.error(f"Error during upload: {e}")
+        return HttpResponseBadRequest(f"Error: {e}")
 
-    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 def table_selection(request):
     """

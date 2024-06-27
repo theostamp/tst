@@ -98,7 +98,7 @@ docker-compose logs -f
 cd rest_order
 git init
 git add .
-git commit -m "Initial 14 commit"
+git commit -m "Initial 15 commit"
 git remote add origin https://github.com/theostamp/dinesight
 git push -u origin main --force
 
