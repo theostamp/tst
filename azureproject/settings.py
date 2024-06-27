@@ -118,3 +118,6 @@ TEMPLATES = [
         },
     },
 ]
+
+
+TENANTS_BASE_FOLDER = os.path.join(BASE_DIR, 'tenants_folders')

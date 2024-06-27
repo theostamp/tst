@@ -67,7 +67,7 @@
             document.getElementById('table-number').textContent = tableNumber;
 
             try {
-                const url = `/tenants_folders/${tenant}_received_orders/order_table_${tableNumber}.json`;
+                const url = `workspace/tenants_folders/${tenant}_received_orders/order_table_${tableNumber}.json`;
                 const response = await fetch(url);
                 if (!response.ok) {
                     throw new Error(`Network response was not ok. Status: ${response.status}`);

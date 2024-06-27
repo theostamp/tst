@@ -64,13 +64,14 @@ def create_tenant(user):
     return tenant, None
 
 def create_folders_for_tenant(tenant_name):
-    base_tenant_folder = os.path.join(settings.BASE_DIR, 'tenants_folders')
+    base_tenant_folder = settings.TENANTS_BASE_FOLDER
     os.makedirs(base_tenant_folder, exist_ok=True)
 
     categories = ['received_orders', 'upload_json']
     for category in categories:
         tenant_folder = os.path.join(base_tenant_folder, f'{tenant_name}_{category}')
         os.makedirs(tenant_folder, exist_ok=True)
+
 
 def setup_url(request):
     if request.method == 'POST':
