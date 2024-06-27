@@ -122,84 +122,22 @@
                 }
             }
 
-
-            
             async function loadTables(tenant) {
-    try {
-        const url = `/table_selection_with_time_diff/`;
-        console.log(`Fetching data from: ${url}`);
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`Network response was not ok. Status: ${response.status}`);
-        }
-        const data = await response.json();
-        const tables = data.tables;
-        console.log('Tables data:', tables);
-        await loadTimeDiffs(tables, tenant);
-        const positions = await loadButtonPositions();
-        createTableButtons(tables, positions);
-    } catch (error) {
-        console.error('Error loading tables:', error);
-    }
-}
-
-async function loadTimeDiffs(tables, tenant) {
-    try {
-        const url = `/list_order_files/${tenant}/`;
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`Network response was not ok. Status: ${response.status}`);
-        }
-        const files = await response.json();
-
-        for (const table of tables) {
-            const tableNumber = table.table_number;
-            const matchingFile = files.files.find(file => file.includes(`order_table_${tableNumber}_`));
-            if (matchingFile) {
-                const fileResponse = await fetch(`/tenants_folders/${tenant}_received_orders/${matchingFile}`);
-                if (fileResponse.ok) {
-                    const orderData = await fileResponse.json();
-                    const timeDiff = orderData.time_diff;
-                    const orderDone = orderData.order_done;
-                    if (timeDiff !== undefined) {
-                        table.time_diff = convertMinutesToHHMM(timeDiff);
-                        await updateJsonFile(tenant, matchingFile);
-                    }
-                    table.order_status = orderDone === 1 ? null : "PENDING";
-                } else {
-                    table.time_diff = 'N/A';
-                    table.order_status = null;
-                }
-            } else {
-                table.time_diff = 'N/A';
-                table.order_status = null;
-            }
-        }
-    } catch (error) {
-        console.error('Error loading time_diff:', error);
-        tables.forEach(table => {
-            table.time_diff = 'N/A';
-            table.order_status = null;
-        });
-    }
-}
-
-
-            async function updateJsonFile(tenant, filename) {
-                const url = `/update_time_diff/${tenant}/${filename}`;
                 try {
-                    await fetch(url, {
-                        method: 'POST'
-                    });
+                    const url = `/table_selection_with_time_diff/`;
+                    console.log(`Fetching data from: ${url}`);
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        throw new Error(`Network response was not ok. Status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    const tables = data.tables;
+                    console.log('Tables data:', tables);
+                    const positions = await loadButtonPositions();
+                    createTableButtons(tables, positions);
                 } catch (error) {
-                    console.error('Error updating JSON file:', error);
+                    console.error('Error loading tables:', error);
                 }
-            }
-
-            function convertMinutesToHHMM(minutes) {
-                const hours = Math.floor(minutes / 60);
-                const mins = minutes % 60;
-                return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
             }
 
             function convertDurationToHHMM(duration) {
@@ -326,8 +264,8 @@ async function loadTimeDiffs(tables, tenant) {
                 const width = container.clientWidth;
                 const height = width / 2;
                 container.style.height = `${height}px`;
-            
             }
+
             // Ανανέωση των δεδομένων κάθε 10 δευτερόλεπτα χωρίς ανανέωση της σελίδας
             setInterval(() => {
                 const tenant = getTenantFromHostname();
