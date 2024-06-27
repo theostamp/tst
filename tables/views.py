@@ -807,14 +807,12 @@ def get_orders(request):
 
 
 @csrf_exempt
-
 def table_selection_with_time_diff(request):
     tenant = connection.get_tenant()
     tenant_name = tenant.name
 
     occupied_tables_file = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant_name}_upload_json', 'occupied_tables.json')
 
-    # Καταγραφή της διαδρομής για επιβεβαίωση
     logger.debug(f"Occupied tables file path: {occupied_tables_file}")
 
     if not os.path.exists(occupied_tables_file):
@@ -825,20 +823,17 @@ def table_selection_with_time_diff(request):
         with open(occupied_tables_file, 'r') as file:
             data = json.load(file)
 
-            # Ελέγξτε αν το data περιέχει το κλειδί "tables"
             if "tables" not in data:
                 logger.error(f"'tables' key not found in the JSON file: {occupied_tables_file}")
                 return HttpResponseNotFound("'tables' key not found in the JSON file")
 
             tables_data = data["tables"]
 
-            # Έλεγχος αν το tables_data είναι λίστα
             if not isinstance(tables_data, list):
                 logger.error(f"Invalid data format: expected list, got {type(tables_data).__name__}")
                 return HttpResponseNotFound('Invalid data format')
 
             for table in tables_data:
-                # Έλεγχος αν το table είναι dictionary
                 if not isinstance(table, dict):
                     logger.error(f"Invalid table format: expected dict, got {type(table).__name__}")
                     return HttpResponseNotFound('Invalid table format')
@@ -885,7 +880,6 @@ def get_time_diff_from_file(tenant_name, table_number):
                 continue
 
     return 'N/A'
-
 
 
 
