@@ -42,14 +42,14 @@ jobs:
         - name: Make sure Python code is all compilable
           run: |
             python -m compileall azureproject -f
-            python -m compileall restaurant_review -f
+  
             python -m compileall tables -f
             python -m compileall tenants -f
             python -m compileall authentication -f
         - name: Run Django server
           run: |
             python manage.py migrate
-            python manage.py test restaurant_review &&
+    
             python manage.py runserver &
           env:
             DBNAME: postgres

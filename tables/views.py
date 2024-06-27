@@ -150,6 +150,8 @@ def upload_json(request, username):
         return HttpResponseBadRequest(f"Error: {e}")
 
 
+
+@csrf_exempt
 def table_selection(request):
     """
     Επιστρέφει μια λίστα με τα τραπέζια από το αρχείο occupied_tables.json
@@ -200,7 +202,7 @@ def table_selection(request):
         return HttpResponseNotFound('Error decoding JSON file')
 
 
-@csrf_exempt
+
 
 @csrf_exempt
 def order_for_table(request, table_number):

@@ -14,7 +14,6 @@ if 'CODESPACE_NAME' in os.environ:
 
 SHARED_APPS = [
     'django_tenants',
-    'restaurant_review.apps.RestaurantReviewConfig',
     'tenants.apps.TenantsConfig',
     'authentication.apps.AuthenticationConfig',
     'django.contrib.admin',
@@ -121,3 +120,5 @@ TEMPLATES = [
 
 
 TENANTS_BASE_FOLDER = os.path.join(BASE_DIR, 'tenants_folders')
+CSRF_TRUSTED_ORIGINS = ['http://localhost:8080']
+CSRF_COOKIE_SECURE = False  # Απενεργοποίησε αν δεν χρησιμοποιείς HTTPS τοπικά
