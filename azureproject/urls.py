@@ -16,8 +16,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path 
 from tables import views as tables_views  
-from authentication.views import register
-# from azureproject import views 
+from authentication.views import register, get_csrf_token
+
 
 urlpatterns = [
  
@@ -30,5 +30,5 @@ urlpatterns = [
     path('authentication/', include('authentication.urls')),
     # path('', views.index, name='index'),
     # path('', include('main.urls')),  # Κεντρική διαδρομή για την εφαρμογή main
-
+    path('get-csrf-token/', get_csrf_token, name='get_csrf_token'), 
 ]

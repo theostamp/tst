@@ -86,7 +86,7 @@ def delete_received_orders(request, tenant):
     try:
         data = json.loads(request.body)
         order_ids = set(map(str, data.get('order_ids', [])))
-        directory = f'/app/tenants_folders/{tenant}_received_orders'
+        directory = f'tenants_folders/{tenant}_received_orders'
 
         if not os.path.exists(directory):
             response_data['errors'].append('Directory not found.')
@@ -118,7 +118,7 @@ def delete_received_orders(request, tenant):
 
 @csrf_exempt
 def upload_json(request, username):
-    tenant_folder = f'/app/tenants_folders/{username}_upload_json'
+    tenant_folder = f'/tenants_folders/{username}_upload_json'
     os.makedirs(tenant_folder, exist_ok=True)
 
     if request.method == 'POST':
@@ -192,7 +192,6 @@ def order_for_table(request, table_number):
 def success(request):
     return render(request, 'tables/success.html')
 
-# views.py
 
 @csrf_exempt
 def list_order_files(request, tenant):
