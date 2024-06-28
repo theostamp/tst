@@ -11,16 +11,18 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+        # Άλλα URL patterns
     path('upload_json/<str:username>/', views.upload_json, name='upload_json'),
-    path('upload_json/products.json', views.products_json, name='products_json'),
     path('list_order_files/<str:tenant>/', views.list_order_files, name='list_order_files'),
+    path('get_order/<str:tenant>/<str:filename>/', views.get_order, name='get_order_tenant'),  # Προσθήκη του URL pattern για το get_order
+    # Άλλα URL patterns
+    path('upload_json/products.json', views.products_json, name='products_json'),
     path('table_selection/', views.table_selection, name='table_selection'),
     path('order_for_table/<int:table_number>/', views.order_for_table, name='order_for_table'),
     path('submit_order/', views.submit_order, name='submit_order'),
     path('order_for_table/<int:table_number>/submit_order/', views.submit_order, name='submit_order_specific'),
     path('success/', views.success, name='success'),
     path('get_order/<str:filename>', views.get_order, name='get_order'),
-    path('get_order/<str:tenant>/<str:filename>/', views.get_order, name='get_order_tenant'),
     path('orders_json/', views.get_orders_json, name='get_orders_json'),
     path('get_json/', views.get_json, name='get_json'),
     path('order_summary/', views.order_summary, name='order_summary'),

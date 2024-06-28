@@ -28,7 +28,11 @@ from django_tenants.utils import (
 from django.urls import set_urlconf
 from django.utils.deprecation import MiddlewareMixin
 from django.http import JsonResponse, HttpResponseBadRequest
+from django.http import JsonResponse, Http404
+from pathlib import Path
 
+# Ορισμός του BASE_DIR
+BASE_DIR = Path(__file__).resolve().parent.parent
 # Ρύθμιση του logging
 LOG_FILENAME = 'order_submissions.log'
 
@@ -53,6 +57,18 @@ logger.addHandler(console_handler)
 # Έλεγχος αν το αρχείο log υπάρχει και δημιουργία αν δεν υπάρχει
 if not os.path.exists(LOG_FILENAME):
     open(LOG_FILENAME, 'a').close()
+
+
+
+
+def log_environment_variables():
+    logger.info(f"BASE_DIR: {BASE_DIR}")
+    logger.info(f"SECRET_KEY: {os.getenv('SECRET_KEY')}")
+    logger.info(f"DBNAME: {os.getenv('DBNAME')}")
+    logger.info(f"DBHOST: {os.getenv('DBHOST')}")
+    logger.info(f"DBUSER: {os.getenv('DBUSER')}")
+    logger.info(f"DBPASS: {os.getenv('DBPASS')}")
+    logger.info(f"CACHELOCATION: {os.getenv('CACHELOCATION')}")
 
 
 def index(request):
@@ -170,10 +186,11 @@ def success(request):
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
 @csrf_exempt
 def upload_json(request, username):
-    tenant_folder = os.path.join('/workspace', 'tenants_folders', f'{username}_upload_json')
+    log_environment_variables()  # Καταγραφή των μεταβλητών περιβάλλοντος
+
+    tenant_folder = os.path.join(BASE_DIR, 'tenants_folders', f'{username}_upload_json')
     os.makedirs(tenant_folder, exist_ok=True)
 
     if request.method == 'POST':
@@ -204,35 +221,38 @@ def upload_json(request, username):
 
 @csrf_exempt
 def list_order_files(request, tenant):
-    folder_path = os.path.join('/workspace', 'tenants_folders', f'{tenant}_received_orders')
+    log_environment_variables()  # Καταγραφή των μεταβλητών περιβάλλοντος
+
+    folder_path = os.path.join(BASE_DIR, 'tenants_folders', f'{tenant}_received_orders')
     if not os.path.exists(folder_path):
         os.makedirs(folder_path, exist_ok=True)
     
     logger.info(f"Προσπάθεια πρόσβασης στον φάκελο: {folder_path}")
 
     if os.path.exists(folder_path):
-        file_list = os.listdir(folder_path)
+        file_list = [f for f in os.listdir(folder_path)]
         logger.info(f"Βρέθηκαν αρχεία: {file_list}")
         return JsonResponse({'files': file_list})
     else:
+        logger.error(f"Ο φάκελος δεν βρέθηκε: {folder_path}")
         return JsonResponse({'status': 'error', 'message': 'Directory not found'}, status=404)
 
 @csrf_exempt
 def get_order(request, tenant, filename):
-    file_path = os.path.join('/workspace', 'tenants_folders', f'{tenant}_received_orders', filename)
+    log_environment_variables()  # Καταγραφή των μεταβλητών περιβάλλοντος
+
+    file_path = os.path.join(BASE_DIR, 'tenants_folders', f'{tenant}_received_orders', filename)
     logger.info(f"Προσπάθεια ανάκτησης αρχείου: {file_path}")
     if os.path.exists(file_path):
-        with open(file_path, 'rb') as file:  # Use 'rb' to read the file in binary mode
-            data = file.read()
-            response = JsonResponse(json.loads(data.decode('utf-8')))  # Convert binary to JSON
-            logger.info(f"Επιτυχής ανάκτηση αρχείου: {file_path}")
-            return response
+        with open(file_path, 'r', encoding='utf-8') as file:
+            data = json.load(file)
+            return JsonResponse(data, safe=False)
     else:
         logger.error(f"Το αρχείο δεν βρέθηκε: {file_path}")
         raise Http404("Το αρχείο δεν βρέθηκε")
+    
 
-
-
+    
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 def serve_order_file(request, tenant, filename):
