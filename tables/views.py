@@ -223,40 +223,24 @@ def upload_json(request, username):
 
 
 
-@csrf_exempt
-def get_order(request, tenant, filename):
-    log_environment_variables()  # Καταγραφή των μεταβλητών περιβάλλοντος
 
-    # Νέα διαδρομή αρχείου
-    file_path = os.path.join(BASE_DIR, 'tenants_folders_clone', f'{tenant}_received_orders', filename)
-    logger.info(f"Προσπάθεια ανάκτησης αρχείου: {file_path}")
+def list_order_files(request, username):
+    order_directory = os.path.join(settings.BASE_DIR, 'tenants_folders_clone', 'theo_received_orders')
+    if os.path.exists(order_directory):
+        files = [f for f in os.listdir(order_directory) if f.endswith('.json')]
+        return JsonResponse({'files': files})
+    return JsonResponse({'files': []})
+
+def get_order(request, username, filename):
+    file_path = os.path.join(settings.BASE_DIR, 'tenants_folders_clone', 'theo_received_orders', filename)
     if os.path.exists(file_path):
         with open(file_path, 'r', encoding='utf-8') as file:
-            data = json.load(file)
-            return JsonResponse(data, safe=False)
-    else:
-        logger.error(f"Το αρχείο δεν βρέθηκε: {file_path}")
-        raise Http404("Το αρχείο δεν βρέθηκε")
+            response = HttpResponse(file.read(), content_type='application/json')
+            response['Content-Disposition'] = f'attachment; filename={filename}'
+            return response
+    return HttpResponseNotFound(f"File {filename} not found")
 
-@csrf_exempt
-def list_order_files(request, tenant):
-    log_environment_variables()  # Καταγραφή των μεταβλητών περιβάλλοντος
-
-    folder_path = os.path.join(BASE_DIR, 'tenants_folders_clone', f'{tenant}_received_orders')
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path, exist_ok=True)
     
-    logger.info(f"Προσπάθεια πρόσβασης στον φάκελο: {folder_path}")
-
-    if os.path.exists(folder_path):
-        file_list = [f for f in os.listdir(folder_path)]
-        logger.info(f"Βρέθηκαν αρχεία: {file_list}")
-        return JsonResponse({'files': file_list})
-    else:
-        logger.error(f"Ο φάκελος δεν βρέθηκε: {folder_path}")
-        return JsonResponse({'status': 'error', 'message': 'Directory not found'}, status=404)
-
-
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 def serve_order_file(request, tenant, filename):
