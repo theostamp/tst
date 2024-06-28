@@ -86,7 +86,7 @@ def delete_received_orders(request, tenant):
     try:
         data = json.loads(request.body)
         order_ids = set(map(str, data.get('order_ids', [])))
-        directory = f'/app/tenants_folders/{tenant}_received_orders'
+        directory = f'/tenants_folders/{tenant}_received_orders'
 
         if not os.path.exists(directory):
             response_data['errors'].append('Directory not found.')
@@ -118,7 +118,7 @@ def delete_received_orders(request, tenant):
 
 @csrf_exempt
 def upload_json(request, username):
-    tenant_folder = f'/app/tenants_folders/{username}_upload_json'
+    tenant_folder = f'/tenants_folders/{username}_upload_json'
     os.makedirs(tenant_folder, exist_ok=True)
 
     if request.method == 'POST':
@@ -771,7 +771,7 @@ def update_time_diff(request, tenant, filename):
             print(f"Received request to update time_diff for tenant: {tenant}, file: {filename}")
 
             # Διαδρομή στο αρχείο JSON που χρειάζεται ενημέρωση
-            file_path = os.path.join('/app/tenants_folders', f'{tenant}_received_orders', filename)
+            file_path = os.path.join('/tenants_folders', f'{tenant}_received_orders', filename)
             print(f"File path: {file_path}")
 
             # Ελέγξτε αν το αρχείο υπάρχει
