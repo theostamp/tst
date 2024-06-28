@@ -28,6 +28,7 @@ from django_tenants.utils import (
 from django.urls import set_urlconf
 from django.utils.deprecation import MiddlewareMixin
 from django.http import JsonResponse, HttpResponseBadRequest
+from django.views.decorators.cache import never_cache
 
 # Ρύθμιση του logging
 LOG_FILENAME = 'order_submissions.log'
@@ -165,7 +166,7 @@ def upload_json(request, username):
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
-
+@never_cache
 @csrf_exempt
 def get_order(request, tenant, filename):
     """
@@ -230,7 +231,6 @@ def table_selection(request):
         # Εδώ μπορείτε να χειριστείτε την περίπτωση που το αρχείο δεν βρίσκεται
         return HttpResponseNotFound('File not found')
 
-@csrf_exempt
 def order_for_table(request, table_number):
     """
     Επεξεργάζεται και εμφανίζει τις πληροφορίες παραγγελίας για ένα συγκεκριμένο τραπέζι,
@@ -259,7 +259,9 @@ def order_for_table(request, table_number):
 def success(request):
     return render(request, 'tables/success.html')
 
-# views.py
+
+
+
 
 @csrf_exempt
 def list_order_files(request, tenant):
