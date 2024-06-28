@@ -116,23 +116,42 @@ def delete_received_orders(request, tenant):
         response_data['errors'].append(str(e))
         return JsonResponse(response_data, status=500)
 
+
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+
+def has_write_permission(path):
+    return os.access(path, os.W_OK)
+
 @csrf_exempt
 def upload_json(request, username):
-    tenant_folder = f'/tenants_folders/{username}_upload_json'
-    os.makedirs(tenant_folder, exist_ok=True)
+    tenant_folder = os.path.join('/workspace/tenants_folders', f'{username}_upload_json')
+    
+    if not has_write_permission('/workspace/tenants_folders'):
+        logger.error(f"Permission denied for creating directory: /workspace/tenants_folders")
+        return JsonResponse({'status': 'error', 'message': 'Permission denied for base directory'}, status=500)
+    
+    try:
+        os.makedirs(tenant_folder, exist_ok=True)
+    except PermissionError as e:
+        logger.error(f"Permission denied: {e}")
+        return JsonResponse({'status': 'error', 'message': 'Permission denied'}, status=500)
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return JsonResponse({'status': 'error', 'message': 'Unexpected error occurred'}, status=500)
 
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            # Προσθήκη χειρισμού για το 'occupied_tables'
             file_type = next((k for k in data if k in ['products', 'tables', 'occupied_tables']), None)
             if not file_type:
                 return JsonResponse({'status': 'error', 'message': 'Unknown file type'}, status=400)
 
-            # Μετονομασία κλειδιού 'tables' σε 'occupied_tables' κατά την αποθήκευση
             file_name = f"{file_type.replace('tables', 'occupied_tables')}.json"
             file_path = os.path.join(tenant_folder, file_name)
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
             with open(file_path, 'w') as file:
                 json.dump(data[file_type], file, indent=4)
@@ -141,9 +160,57 @@ def upload_json(request, username):
         except json.JSONDecodeError:
             return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+            logger.error(f"Unexpected error: {e}")
+            return JsonResponse({'status': 'error', 'message': 'Unexpected error occurred'}, status=500)
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
+
+@csrf_exempt
+def get_order(request, tenant, filename):
+    """
+    Επιστρέφει τα περιεχόμενα ενός συγκεκριμένου JSON αρχείου παραγγελίας
+    για τον δοθέν tenant με βάση το όνομα αρχείου που παρέχεται.
+    """
+    file_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant}_received_orders', filename)
+    logger.debug(f"Checking file path: {file_path}")
+    
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, 'r') as file:
+                data = json.load(file)
+                return HttpResponse(json.dumps(data), content_type='application/json')
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON decode error: {e}")
+            return HttpResponseBadRequest(f"JSON decode error: {e}")
+        except Exception as e:
+            logger.error(f"Error reading file: {e}")
+            return HttpResponseBadRequest(f"Error reading file: {e}")
+    else:
+        logger.error(f"File not found: {file_path}")
+        return JsonResponse({'error': 'File not found', 'file_path': file_path}, status=404)
+
+@csrf_exempt
+def test_read_file(request):
+    file_path = '/workspace/tenants_folders/theo_received_orders/order_table_1_540102.json'
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, 'r') as file:
+                data = json.load(file)
+                return JsonResponse(data)
+        except json.JSONDecodeError as e:
+            return HttpResponseBadRequest(f"JSON decode error: {e}")
+        except Exception as e:
+            return HttpResponseBadRequest(f"Error reading file: {e}")
+    else:
+        raise Http404("File not found")
+
+
+
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+
 
 def table_selection(request):
     """
@@ -219,19 +286,6 @@ def serve_order_file(request, tenant, filename):
     else:
         return HttpResponseNotFound('File not found')
 
-@csrf_exempt
-def get_order(request, tenant, filename):
-    """
-    Επιστρέφει τα περιεχόμενα ενός συγκεκριμένου JSON αρχείου παραγγελίας
-    για τον δοθέν tenant με βάση το όνομα αρχείου που παρέχεται.
-    """
-    file_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant}_received_orders', filename)
-    if os.path.exists(file_path):
-        with open(file_path, 'r') as file:
-            data = json.load(file)
-            return HttpResponse(json.dumps(data), content_type='application/json')
-    else:
-        raise Http404("Το αρχείο δεν βρέθηκε")
 
 @csrf_exempt
 def update_product_status(request):

@@ -42,4 +42,6 @@ urlpatterns = [
     path('load_positions', views.load_positions, name='load_positions'),
     path('update_time_diff/<str:tenant>/<str:filename>/', views.update_time_diff, name='update_time_diff'),
     path('order_details/', views.order_details, name='order_details'),
+
+    path('test_read_file/', views.test_read_file, name='test_read_file'),
 ]
