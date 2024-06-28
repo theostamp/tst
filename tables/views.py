@@ -60,17 +60,6 @@ if not os.path.exists(LOG_FILENAME):
 
 
 
-
-def log_environment_variables():
-    logger.info(f"BASE_DIR: {BASE_DIR}")
-    logger.info(f"SECRET_KEY: {os.getenv('SECRET_KEY')}")
-    logger.info(f"DBNAME: {os.getenv('DBNAME')}")
-    logger.info(f"DBHOST: {os.getenv('DBHOST')}")
-    logger.info(f"DBUSER: {os.getenv('DBUSER')}")
-    logger.info(f"DBPASS: {os.getenv('DBPASS')}")
-    logger.info(f"CACHELOCATION: {os.getenv('CACHELOCATION')}")
-
-
 def index(request):
     return render(request, 'index.html')
 
@@ -186,6 +175,19 @@ def success(request):
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+# Λειτουργία για την εμφάνιση των μεταβλητών περιβάλλοντος
+def log_environment_variables():
+    logger.info(f"BASE_DIR: {BASE_DIR}")
+    logger.info(f"SECRET_KEY: {os.getenv('SECRET_KEY')}")
+    logger.info(f"DBNAME: {os.getenv('DBNAME')}")
+    logger.info(f"DBHOST: {os.getenv('DBHOST')}")
+    logger.info(f"DBUSER: {os.getenv('DBUSER')}")
+    logger.info(f"DBPASS: {os.getenv('DBPASS')}")
+    logger.info(f"CACHELOCATION: {os.getenv('CACHELOCATION')}")
+
+
+
 @csrf_exempt
 def upload_json(request, username):
     log_environment_variables()  # Καταγραφή των μεταβλητών περιβάλλοντος
@@ -219,6 +221,8 @@ def upload_json(request, username):
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
+
+
 @csrf_exempt
 def list_order_files(request, tenant):
     log_environment_variables()  # Καταγραφή των μεταβλητών περιβάλλοντος
@@ -230,12 +234,15 @@ def list_order_files(request, tenant):
     logger.info(f"Προσπάθεια πρόσβασης στον φάκελο: {folder_path}")
 
     if os.path.exists(folder_path):
+        # Επιστροφή μόνο των ονομάτων των αρχείων, όχι ολόκληρων διαδρομών
         file_list = [f for f in os.listdir(folder_path)]
         logger.info(f"Βρέθηκαν αρχεία: {file_list}")
+
         return JsonResponse({'files': file_list})
     else:
         logger.error(f"Ο φάκελος δεν βρέθηκε: {folder_path}")
         return JsonResponse({'status': 'error', 'message': 'Directory not found'}, status=404)
+
 
 @csrf_exempt
 def get_order(request, tenant, filename):
@@ -250,9 +257,9 @@ def get_order(request, tenant, filename):
     else:
         logger.error(f"Το αρχείο δεν βρέθηκε: {file_path}")
         raise Http404("Το αρχείο δεν βρέθηκε")
-    
 
-    
+
+
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 def serve_order_file(request, tenant, filename):
