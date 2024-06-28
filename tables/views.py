@@ -224,31 +224,11 @@ def upload_json(request, username):
 
 
 @csrf_exempt
-def list_order_files(request, tenant):
-    log_environment_variables()  # Καταγραφή των μεταβλητών περιβάλλοντος
-
-    folder_path = os.path.join(BASE_DIR, 'tenants_folders', f'{tenant}_received_orders')
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path, exist_ok=True)
-    
-    logger.info(f"Προσπάθεια πρόσβασης στον φάκελο: {folder_path}")
-
-    if os.path.exists(folder_path):
-        # Επιστροφή μόνο των ονομάτων των αρχείων, όχι ολόκληρων διαδρομών
-        file_list = [f for f in os.listdir(folder_path)]
-        logger.info(f"Βρέθηκαν αρχεία: {file_list}")
-
-        return JsonResponse({'files': file_list})
-    else:
-        logger.error(f"Ο φάκελος δεν βρέθηκε: {folder_path}")
-        return JsonResponse({'status': 'error', 'message': 'Directory not found'}, status=404)
-
-
-@csrf_exempt
 def get_order(request, tenant, filename):
     log_environment_variables()  # Καταγραφή των μεταβλητών περιβάλλοντος
 
-    file_path = os.path.join(BASE_DIR, 'tenants_folders', f'{tenant}_received_orders', filename)
+    # Νέα διαδρομή αρχείου
+    file_path = os.path.join(BASE_DIR, 'tenants_folders_clone', f'{tenant}_received_orders', filename)
     logger.info(f"Προσπάθεια ανάκτησης αρχείου: {file_path}")
     if os.path.exists(file_path):
         with open(file_path, 'r', encoding='utf-8') as file:
@@ -258,6 +238,23 @@ def get_order(request, tenant, filename):
         logger.error(f"Το αρχείο δεν βρέθηκε: {file_path}")
         raise Http404("Το αρχείο δεν βρέθηκε")
 
+@csrf_exempt
+def list_order_files(request, tenant):
+    log_environment_variables()  # Καταγραφή των μεταβλητών περιβάλλοντος
+
+    folder_path = os.path.join(BASE_DIR, 'tenants_folders_clone', f'{tenant}_received_orders')
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path, exist_ok=True)
+    
+    logger.info(f"Προσπάθεια πρόσβασης στον φάκελο: {folder_path}")
+
+    if os.path.exists(folder_path):
+        file_list = [f for f in os.listdir(folder_path)]
+        logger.info(f"Βρέθηκαν αρχεία: {file_list}")
+        return JsonResponse({'files': file_list})
+    else:
+        logger.error(f"Ο φάκελος δεν βρέθηκε: {folder_path}")
+        return JsonResponse({'status': 'error', 'message': 'Directory not found'}, status=404)
 
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
