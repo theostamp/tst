@@ -28,11 +28,7 @@ from django_tenants.utils import (
 from django.urls import set_urlconf
 from django.utils.deprecation import MiddlewareMixin
 from django.http import JsonResponse, HttpResponseBadRequest
-from django.http import JsonResponse, Http404
-from pathlib import Path
 
-# Ορισμός του BASE_DIR
-BASE_DIR = Path(__file__).resolve().parent.parent
 # Ρύθμιση του logging
 LOG_FILENAME = 'order_submissions.log'
 
@@ -43,7 +39,7 @@ logger.setLevel(logging.INFO)
 # Δημιουργία RotatingFileHandler
 file_handler = RotatingFileHandler(LOG_FILENAME, maxBytes=5*1024*1024, backupCount=5)
 file_handler.setLevel(logging.INFO)
-file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))  # Διορθώθηκε από 'levellevelname' σε 'levelname'
+file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 
 # Προσθήκη του handler στο logger
 logger.addHandler(file_handler)
@@ -58,11 +54,8 @@ logger.addHandler(console_handler)
 if not os.path.exists(LOG_FILENAME):
     open(LOG_FILENAME, 'a').close()
 
-
-
 def index(request):
     return render(request, 'index.html')
-
 
 @csrf_exempt
 def check_for_refresh(request):
@@ -93,7 +86,7 @@ def delete_received_orders(request, tenant):
     try:
         data = json.loads(request.body)
         order_ids = set(map(str, data.get('order_ids', [])))
-        directory = f'tenants_folders/{tenant}_received_orders'
+        directory = f'/app/tenants_folders/{tenant}_received_orders'
 
         if not os.path.exists(directory):
             response_data['errors'].append('Directory not found.')
@@ -123,8 +116,34 @@ def delete_received_orders(request, tenant):
         response_data['errors'].append(str(e))
         return JsonResponse(response_data, status=500)
 
+@csrf_exempt
+def upload_json(request, username):
+    tenant_folder = f'/app/tenants_folders/{username}_upload_json'
+    os.makedirs(tenant_folder, exist_ok=True)
 
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            # Προσθήκη χειρισμού για το 'occupied_tables'
+            file_type = next((k for k in data if k in ['products', 'tables', 'occupied_tables']), None)
+            if not file_type:
+                return JsonResponse({'status': 'error', 'message': 'Unknown file type'}, status=400)
 
+            # Μετονομασία κλειδιού 'tables' σε 'occupied_tables' κατά την αποθήκευση
+            file_name = f"{file_type.replace('tables', 'occupied_tables')}.json"
+            file_path = os.path.join(tenant_folder, file_name)
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+            with open(file_path, 'w') as file:
+                json.dump(data[file_type], file, indent=4)
+
+            return JsonResponse({'status': 'success'})
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 def table_selection(request):
     """
@@ -143,7 +162,6 @@ def table_selection(request):
     except FileNotFoundError:
         # Εδώ μπορείτε να χειριστείτε την περίπτωση που το αρχείο δεν βρίσκεται
         return HttpResponseNotFound('File not found')
-
 
 @csrf_exempt
 def order_for_table(request, table_number):
@@ -170,78 +188,25 @@ def order_for_table(request, table_number):
 
 
 
+
 def success(request):
     return render(request, 'tables/success.html')
 
-
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-# Λειτουργία για την εμφάνιση των μεταβλητών περιβάλλοντος
-def log_environment_variables():
-    logger.info(f"BASE_DIR: {BASE_DIR}")
-    logger.info(f"SECRET_KEY: {os.getenv('SECRET_KEY')}")
-    logger.info(f"DBNAME: {os.getenv('DBNAME')}")
-    logger.info(f"DBHOST: {os.getenv('DBHOST')}")
-    logger.info(f"DBUSER: {os.getenv('DBUSER')}")
-    logger.info(f"DBPASS: {os.getenv('DBPASS')}")
-    logger.info(f"CACHELOCATION: {os.getenv('CACHELOCATION')}")
-
-
+# views.py
 
 @csrf_exempt
-def upload_json(request, username):
-    log_environment_variables()  # Καταγραφή των μεταβλητών περιβάλλοντος
+def list_order_files(request, tenant):
+    """
+    Επιστρέφει ένα JSON απόκριση με τη λίστα των αρχείων παραγγελίας
+    που βρίσκονται σε έναν συγκεκριμένο φάκελο για τον δεδομένο tenant.
+    """
+    folder_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant}_received_orders')
 
-    tenant_folder = os.path.join(BASE_DIR, 'tenants_folders', f'{username}_upload_json')
-    os.makedirs(tenant_folder, exist_ok=True)
-
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            file_type = next((k for k in data if k in ['products', 'tables', 'occupied_tables', 'reservations']), None)
-            if not file_type:
-                return JsonResponse({'status': 'error', 'message': 'Unknown file type'}, status=400)
-
-            if file_type == 'tables':
-                file_name = 'occupied_tables.json'
-            else:
-                file_name = f"{file_type}.json"
-
-            file_path = os.path.join(tenant_folder, file_name)
-            with open(file_path, 'w') as file:
-                json.dump(data[file_type], file, indent=4)
-            
-            logger.info(f"Αποθηκεύτηκε το αρχείο: {file_path}")
-
-            return JsonResponse({'status': 'success'})
-        except json.JSONDecodeError:
-            return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
-    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
-
-
-
-
-def list_order_files(request, username):
-    order_directory = os.path.join(settings.BASE_DIR, 'tenants_folders_clone', 'theo_received_orders')
-    if os.path.exists(order_directory):
-        files = [f for f in os.listdir(order_directory) if f.endswith('.json')]
-        return JsonResponse({'files': files})
-    return JsonResponse({'files': []})
-
-def get_order(request, username, filename):
-    file_path = os.path.join(settings.BASE_DIR, 'tenants_folders_clone', 'theo_received_orders', filename)
-    if os.path.exists(file_path):
-        with open(file_path, 'r', encoding='utf-8') as file:
-            response = HttpResponse(file.read(), content_type='application/json')
-            response['Content-Disposition'] = f'attachment; filename={filename}'
-            return response
-    return HttpResponseNotFound(f"File {filename} not found")
-
-
-# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    if os.path.exists(folder_path):
+        file_list = os.listdir(folder_path)
+        return JsonResponse({'files': file_list})
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Directory not found'}, status=404)
 
 def serve_order_file(request, tenant, filename):
     folder_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant}_received_orders')
@@ -254,6 +219,19 @@ def serve_order_file(request, tenant, filename):
     else:
         return HttpResponseNotFound('File not found')
 
+@csrf_exempt
+def get_order(request, tenant, filename):
+    """
+    Επιστρέφει τα περιεχόμενα ενός συγκεκριμένου JSON αρχείου παραγγελίας
+    για τον δοθέν tenant με βάση το όνομα αρχείου που παρέχεται.
+    """
+    file_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant}_received_orders', filename)
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+            return HttpResponse(json.dumps(data), content_type='application/json')
+    else:
+        raise Http404("Το αρχείο δεν βρέθηκε")
 
 @csrf_exempt
 def update_product_status(request):
@@ -793,7 +771,7 @@ def update_time_diff(request, tenant, filename):
             print(f"Received request to update time_diff for tenant: {tenant}, file: {filename}")
 
             # Διαδρομή στο αρχείο JSON που χρειάζεται ενημέρωση
-            file_path = os.path.join('tenants_folders', f'{tenant}_received_orders', filename)
+            file_path = os.path.join('/app/tenants_folders', f'{tenant}_received_orders', filename)
             print(f"File path: {file_path}")
 
             # Ελέγξτε αν το αρχείο υπάρχει
