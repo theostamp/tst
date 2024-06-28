@@ -240,7 +240,7 @@ def get_order(request, username, filename):
             return response
     return HttpResponseNotFound(f"File {filename} not found")
 
-    
+
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 def serve_order_file(request, tenant, filename):
