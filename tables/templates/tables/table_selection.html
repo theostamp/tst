@@ -127,18 +127,14 @@
         <div class="row custom-row">
             <div class="d-flex">
                 {% for table in tables %}
-                    {% if table.table_number %}
-                        <a href="{% url 'order_for_table' table.table_number %}?name={{ waiterName }}"
-                            class="{{ table.duration|default_if_none:''|length|yesno:'occupied-button,custom-button' }}">
-                            <div class="table-number">{{ table.table_number }}</div>
-                            <div class="table-duration">{{ table.duration }}</div>
-                            {% if table.time_diff and table.time_diff != 'N/A' %}
-                                <div class="time-diff">Taken at: {{ table.time_diff }}</div>
-                            {% endif %}
-                        </a>
-                    {% else %}
-                        <div>Invalid table number</div>
+                <a href="{% url 'order_for_table' table.table_number %}?name={{ waiterName }}"
+                    class="{{ table.duration|default_if_none:''|length|yesno:'occupied-button,custom-button' }}">
+                    <div class="table-number">{{ table.table_number }}</div>
+                    <div class="table-duration">{{ table.duration }}</div>
+                    {% if table.time_diff and table.time_diff != 'N/A' %}
+                    <div class="time-diff">Taken at: {{ table.time_diff }}</div>
                     {% endif %}
+                </a>
                 {% endfor %}
             </div>
         </div>

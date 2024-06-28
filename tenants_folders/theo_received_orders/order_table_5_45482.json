@@ -1,13 +1,13 @@
 {
-    "table_number": 2,
+    "table_number": 5,
     "product_description": "\u039a\u03a1\u0391\u03a3\u0391 \u03a0\u03a1\u0391\u03a3\u0399\u039d\u0391",
     "quantity": "1",
     "total_cost": 3.0,
     "waiter": "unknown",
     "order_done": 1,
     "printed": false,
-    "order_id": "1222313",
-    "timestamp": "2024-06-27 12:22:31",
+    "order_id": "45482",
+    "timestamp": "2024-06-28 00:45:48",
     "time_diff": 0,
     "time_passed": 0
 }

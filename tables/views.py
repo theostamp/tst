@@ -88,7 +88,7 @@ def delete_received_orders(request, tenant):
     try:
         data = json.loads(request.body)
         order_ids = set(map(str, data.get('order_ids', [])))
-        directory = f'/workspace/tenants_folders/{tenant}_received_orders'
+        directory = f'tenants_folders/{tenant}_received_orders'
 
         if not os.path.exists(directory):
             response_data['errors'].append('Directory not found.')
@@ -119,40 +119,6 @@ def delete_received_orders(request, tenant):
         return JsonResponse(response_data, status=500)
 
 
-@csrf_exempt
-def upload_json(request, username):
-    tenant_folder = f'/workspace/tenants_folders/{username}_upload_json'
-    os.makedirs(tenant_folder, exist_ok=True)
-
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            logger.info(f"Received data: {json.dumps(data, indent=4)}")
-
-            # Προσθήκη χειρισμού για το 'occupied_tables' και 'reservations'
-            file_type = next((k for k in data if k in ['products', 'tables', 'occupied_tables', 'reservations']), None)
-            if not file_type:
-                return JsonResponse({'status': 'error', 'message': 'Unknown file type'}, status=400)
-
-            # Μετονομασία κλειδιού 'tables' σε 'occupied_tables' κατά την αποθήκευση
-            if file_type == 'tables':
-                file_name = 'occupied_tables.json'
-            else:
-                file_name = f"{file_type}.json"
-                
-            file_path = os.path.join(tenant_folder, file_name)
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
-
-            with open(file_path, 'w') as file:
-                json.dump(data[file_type], file, indent=4)
-
-            return JsonResponse({'status': 'success'})
-        except json.JSONDecodeError:
-            return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
-    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
 def table_selection(request):
@@ -202,51 +168,61 @@ def order_for_table(request, table_number):
 def success(request):
     return render(request, 'tables/success.html')
 
+
+
+
+
+
 @csrf_exempt
 def upload_json(request, username):
-    tenant_folder = f'/workspace/tenants_folders/{username}_upload_json'
+    tenant_folder = os.path.join('/workspace', 'tenants_folders', f'{username}_upload_json')
     os.makedirs(tenant_folder, exist_ok=True)
 
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            # Προσθήκη χειρισμού για το 'reservations'
+            logger.info(f"Received data: {json.dumps(data, indent=4)}")
+
             file_type = next((k for k in data if k in ['products', 'tables', 'occupied_tables', 'reservations']), None)
             if not file_type:
                 return JsonResponse({'status': 'error', 'message': 'Unknown file type'}, status=400)
 
-            # Μετονομασία κλειδιού 'tables' σε 'occupied_tables' κατά την αποθήκευση
-            file_name = f"{file_type.replace('tables', 'occupied_tables')}.json"
+            if file_type == 'tables':
+                file_name = 'occupied_tables.json'
+            else:
+                file_name = f"{file_type}.json"
+                
             file_path = os.path.join(tenant_folder, file_name)
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
             with open(file_path, 'w') as file:
                 json.dump(data[file_type], file, indent=4)
-            
-            logger.info(f"Αποθηκεύτηκε το αρχείο: {file_path}")
 
             return JsonResponse({'status': 'success'})
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
+            logger.error(f"JSONDecodeError: {e}")
             return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
         except Exception as e:
+            logger.error(f"Exception: {e}")
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
-
 @csrf_exempt
 def list_order_files(request, tenant):
-    """
-    Επιστρέφει ένα JSON απόκριση με τη λίστα των αρχείων παραγγελίας
-    που βρίσκονται σε έναν συγκεκριμένο φάκελο για τον δεδομένο tenant.
-    """
-    folder_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant}_received_orders')
+    folder_path = os.path.join('/workspace', 'tenants_folders', f'{tenant}_received_orders')
+    logger.info(f"Προσπάθεια πρόσβασης στον φάκελο: {folder_path}")
+
+    if not os.path.exists(folder_path):
+        logger.info(f"Ο φάκελος {folder_path} δεν υπάρχει, δημιουργείται...")
+        os.makedirs(folder_path, exist_ok=True)
 
     if os.path.exists(folder_path):
         file_list = os.listdir(folder_path)
         return JsonResponse({'files': file_list})
     else:
         return JsonResponse({'status': 'error', 'message': 'Directory not found'}, status=404)
+
 
 def serve_order_file(request, tenant, filename):
     folder_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant}_received_orders')
@@ -811,7 +787,7 @@ def update_time_diff(request, tenant, filename):
             print(f"Received request to update time_diff for tenant: {tenant}, file: {filename}")
 
             # Διαδρομή στο αρχείο JSON που χρειάζεται ενημέρωση
-            file_path = os.path.join('/workspace/tenants_folders', f'{tenant}_received_orders', filename)
+            file_path = os.path.join('tenants_folders', f'{tenant}_received_orders', filename)
             print(f"File path: {file_path}")
 
             # Ελέγξτε αν το αρχείο υπάρχει

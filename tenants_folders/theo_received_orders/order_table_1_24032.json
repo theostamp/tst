@@ -1,13 +1,13 @@
 {
-    "table_number": 5,
+    "table_number": 1,
     "product_description": "\u03a0\u039f\u03a5\u03a1\u0395\u03a3 \u039c\u0395 \u03a3\u03a4\u0391\u03a6\u03a5\u039b\u0399\u0391 \u039a\u0391\u0399 \u039c\u0391\u039d\u0393\u039f",
     "quantity": "1",
     "total_cost": 3.0,
     "waiter": null,
     "order_done": 1,
     "printed": false,
-    "order_id": "1219523",
-    "timestamp": "2024-06-27 12:19:52",
-    "time_diff": 83,
-    "time_passed": 83
+    "order_id": "24032",
+    "timestamp": "2024-06-28 00:24:03",
+    "time_diff": 0,
+    "time_passed": 0
 }

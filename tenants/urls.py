@@ -1,5 +1,5 @@
 
-# /app/tenants/urls.py
+# tenants/urls.py
 from django.urls import path
 from .views import register
 
