@@ -169,7 +169,7 @@ def success(request):
     return render(request, 'tables/success.html')
 
 
-
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 
 
@@ -181,8 +181,6 @@ def upload_json(request, username):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            logger.info(f"Received data: {json.dumps(data, indent=4)}")
-
             file_type = next((k for k in data if k in ['products', 'tables', 'occupied_tables', 'reservations']), None)
             if not file_type:
                 return JsonResponse({'status': 'error', 'message': 'Unknown file type'}, status=400)
@@ -191,38 +189,54 @@ def upload_json(request, username):
                 file_name = 'occupied_tables.json'
             else:
                 file_name = f"{file_type}.json"
-                
-            file_path = os.path.join(tenant_folder, file_name)
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
+            file_path = os.path.join(tenant_folder, file_name)
             with open(file_path, 'w') as file:
                 json.dump(data[file_type], file, indent=4)
+            
+            logger.info(f"Αποθηκεύτηκε το αρχείο: {file_path}")
 
             return JsonResponse({'status': 'success'})
-        except json.JSONDecodeError as e:
-            logger.error(f"JSONDecodeError: {e}")
+        except json.JSONDecodeError:
             return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
         except Exception as e:
-            logger.error(f"Exception: {e}")
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 @csrf_exempt
 def list_order_files(request, tenant):
-    folder_path = os.path.join('/workspace', 'tenants_folders', f'{tenant}_received_orders')
-    logger.info(f"Προσπάθεια πρόσβασης στον φάκελο: {folder_path}")
-
+    folder_path = os.path.join('/workspace', 'received_orders', f'{tenant}_received_orders')
     if not os.path.exists(folder_path):
-        logger.info(f"Ο φάκελος {folder_path} δεν υπάρχει, δημιουργείται...")
         os.makedirs(folder_path, exist_ok=True)
+    
+    logger.info(f"Προσπάθεια πρόσβασης στον φάκελο: {folder_path}")
 
     if os.path.exists(folder_path):
         file_list = os.listdir(folder_path)
+        logger.info(f"Βρέθηκαν αρχεία: {file_list}")
         return JsonResponse({'files': file_list})
     else:
         return JsonResponse({'status': 'error', 'message': 'Directory not found'}, status=404)
 
+@csrf_exempt
+def get_order(request, tenant, filename):
+    file_path = os.path.join('/workspace', 'received_orders', f'{tenant}_received_orders', filename)
+    logger.info(f"Προσπάθεια ανάκτησης αρχείου: {file_path}")
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+            return JsonResponse(data)
+    else:
+        logger.error(f"Το αρχείο δεν βρέθηκε: {file_path}")
+        raise Http404("Το αρχείο δεν βρέθηκε")
+
+
+
+
+
+        
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 def serve_order_file(request, tenant, filename):
     folder_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant}_received_orders')
@@ -235,19 +249,6 @@ def serve_order_file(request, tenant, filename):
     else:
         return HttpResponseNotFound('File not found')
 
-@csrf_exempt
-def get_order(request, tenant, filename):
-    """
-    Επιστρέφει τα περιεχόμενα ενός συγκεκριμένου JSON αρχείου παραγγελίας
-    για τον δοθέν tenant με βάση το όνομα αρχείου που παρέχεται.
-    """
-    file_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant}_received_orders', filename)
-    if os.path.exists(file_path):
-        with open(file_path, 'r') as file:
-            data = json.load(file)
-            return HttpResponse(json.dumps(data), content_type='application/json')
-    else:
-        raise Http404("Το αρχείο δεν βρέθηκε")
 
 @csrf_exempt
 def update_product_status(request):

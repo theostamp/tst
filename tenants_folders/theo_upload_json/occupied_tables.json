@@ -2,7 +2,7 @@
     {
         "table_number": 1,
         "occupied_since": "2024-06-14 20:29:50",
-        "duration": "13 days, 7:15:30",
+        "duration": "13 days, 11:30:56",
         "center_coordinates": [
             67.0,
             261.0,
@@ -13,7 +13,7 @@
     {
         "table_number": 2,
         "occupied_since": "2024-06-27 16:19:27",
-        "duration": "11:25:53",
+        "duration": "15:41:19",
         "center_coordinates": [
             356.0,
             216.0,
@@ -24,7 +24,7 @@
     {
         "table_number": 3,
         "occupied_since": "2024-06-27 16:20:11",
-        "duration": "11:25:09",
+        "duration": "15:40:35",
         "center_coordinates": [
             505.0,
             153.0,
@@ -57,7 +57,7 @@
     {
         "table_number": 6,
         "occupied_since": "2024-06-27 16:20:11",
-        "duration": "11:25:09",
+        "duration": "15:40:35",
         "center_coordinates": [
             107.0,
             125.0,
