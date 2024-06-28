@@ -171,8 +171,6 @@ def success(request):
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-
-
 @csrf_exempt
 def upload_json(request, username):
     tenant_folder = os.path.join('/workspace', 'tenants_folders', f'{username}_upload_json')
@@ -206,7 +204,7 @@ def upload_json(request, username):
 
 @csrf_exempt
 def list_order_files(request, tenant):
-    folder_path = os.path.join('/workspace', 'received_orders', f'{tenant}_received_orders')
+    folder_path = os.path.join('/workspace', 'tenants_folders', f'{tenant}_received_orders')
     if not os.path.exists(folder_path):
         os.makedirs(folder_path, exist_ok=True)
     
@@ -221,21 +219,20 @@ def list_order_files(request, tenant):
 
 @csrf_exempt
 def get_order(request, tenant, filename):
-    file_path = os.path.join('/workspace', 'received_orders', f'{tenant}_received_orders', filename)
+    file_path = os.path.join('/workspace', 'tenants_folders', f'{tenant}_received_orders', filename)
     logger.info(f"Προσπάθεια ανάκτησης αρχείου: {file_path}")
     if os.path.exists(file_path):
-        with open(file_path, 'r') as file:
-            data = json.load(file)
-            return JsonResponse(data)
+        with open(file_path, 'rb') as file:  # Use 'rb' to read the file in binary mode
+            data = file.read()
+            response = JsonResponse(json.loads(data.decode('utf-8')))  # Convert binary to JSON
+            logger.info(f"Επιτυχής ανάκτηση αρχείου: {file_path}")
+            return response
     else:
         logger.error(f"Το αρχείο δεν βρέθηκε: {file_path}")
         raise Http404("Το αρχείο δεν βρέθηκε")
 
 
 
-
-
-        
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 def serve_order_file(request, tenant, filename):
