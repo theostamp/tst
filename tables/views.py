@@ -237,13 +237,7 @@ def test_read_file(request):
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
-
-
 def table_selection(request):
-    """
-    Επιστρέφει μια λίστα με τα τραπέζια από το αρχείο occupied_tables.json
-    και τα εμφανίζει σε μια σελίδα επιλογής τραπεζιού.
-    """
     tenant = connection.get_tenant()
     tenant_name = tenant.name
 
@@ -252,10 +246,27 @@ def table_selection(request):
     try:
         with open(occupied_tables_file, 'r') as file:
             tables_data = json.load(file)
-            return render(request, 'tables/table_selection.html', {'tables': tables_data})
+            if not isinstance(tables_data, dict) or 'tables' not in tables_data:
+                raise TypeError("Expected 'tables' key with a list of tables")
+
+            tables_list = tables_data['tables']
+            if not isinstance(tables_list, list):
+                raise TypeError("Expected list of tables")
+
+            return render(request, 'tables/table_selection.html', {'tables': tables_list})
     except FileNotFoundError:
-        # Εδώ μπορείτε να χειριστείτε την περίπτωση που το αρχείο δεν βρίσκεται
         return HttpResponseNotFound('File not found')
+    except json.JSONDecodeError as e:
+        return HttpResponseBadRequest(f"JSON decode error: {e}")
+    except TypeError as e:
+        return HttpResponseBadRequest(f"Type error: {e}")
+
+
+
+
+
+
+
 
 def order_for_table(request, table_number):
     """
@@ -804,8 +815,6 @@ def get_orders(request):
     return JsonResponse(order_data, safe=False)
 
 
-
-
 def table_selection_with_time_diff(request):
     tenant = connection.get_tenant()
     tenant_name = tenant.name
@@ -819,10 +828,14 @@ def table_selection_with_time_diff(request):
     try:
         with open(occupied_tables_file, 'r') as file:
             tables_data = json.load(file)
-            if not isinstance(tables_data, list):
+            if not isinstance(tables_data, dict) or 'tables' not in tables_data:
+                raise TypeError("Expected 'tables' key with a list of tables")
+
+            tables_list = tables_data['tables']
+            if not isinstance(tables_list, list):
                 raise TypeError("Expected list of tables")
 
-            for table in tables_data:
+            for table in tables_list:
                 if not isinstance(table, dict):
                     raise TypeError("Expected dict for table")
                 table_number = table.get('table_number')
@@ -831,7 +844,7 @@ def table_selection_with_time_diff(request):
                 time_diff = get_time_diff_from_file(tenant_name, table_number)
                 table['time_diff'] = time_diff
 
-            return render(request, 'tables/table_selection_with_time_diff.html', {'tables': tables_data})
+            return render(request, 'tables/table_selection_with_time_diff.html', {'tables': tables_list})
     except FileNotFoundError:
         logger.error(f"File not found: {occupied_tables_file}")
         return HttpResponseNotFound('File not found')
@@ -841,7 +854,6 @@ def table_selection_with_time_diff(request):
     except (TypeError, ValueError) as e:
         logger.error(f"Error in JSON data: {e}")
         return HttpResponseNotFound('Error in JSON data')
-
 
 
 
