@@ -361,30 +361,6 @@ def list_orders(request):
 
     return render(request, 'tables/list_orders.html', {'orders_by_table': orders_by_table})
 
-@csrf_exempt
-def get_orders_json(request):
-    """
-    Συλλέγει όλες τις παραγγελίες από τα JSON αρχεία σε έναν φάκελο
-    και τις επιστρέφει ως μια λίστα σε JSON απόκριση.
-    """
-    print("Η συνάρτηση get_orders_json κλήθηκε.")
-    logger.debug(f"get_orders_json called")
-    orders = []
-    folder_path = 'received_orders'  # Ενημερώστε με τη σωστή διαδρομή
-
-    print("Ξεκινώντας την επεξεργασία του φακέλου:", folder_path)
-
-    for filename in os.listdir(folder_path):
-        if filename.endswith('.json'):
-            file_path = os.path.join(folder_path, filename)
-            
-            print(f"Επεξεργασία αρχείου: {file_path}")
-
-            with open(file_path, 'r') as file:
-                orders.append(json.load(file))
-
-    print("Η επεξεργασία του φακέλου ολοκληρώθηκε.")
-    return JsonResponse({'orders': orders})
 
 @csrf_exempt
 def get_json(request):
@@ -522,6 +498,12 @@ def load_products(tenant):
         products_data = json.load(file)
         return {str(product['id']): product for product in products_data}
 
+
+
+
+
+
+
 @csrf_exempt
 def submit_order(request, table_number=None):
     tenant = connection.get_tenant()
@@ -560,7 +542,7 @@ def submit_order(request, table_number=None):
                     time_diff = int((datetime.now() - datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")).total_seconds() // 60)
                     new_order_data['time_diff'] = time_diff
 
-                # Εδώ χρησιμοποιούμε το όνομα του tenant για να δημιουργήσουμε το σωστό μονοπάτι
+                # Χρήση του ονόματος του tenant για δημιουργία του σωστού μονοπατιού
                 folder_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant.name}_received_orders')
                 file_path = os.path.join(folder_path, filename)
 
@@ -569,6 +551,7 @@ def submit_order(request, table_number=None):
 
                 with open(file_path, 'w') as file:
                     json.dump(new_order_data, file)
+                logger.debug(f"Order saved to: {file_path}")
 
             return JsonResponse({'status': 'success', 'message': 'Η παραγγελία υποβλήθηκε με επιτυχία'})
         except Exception as e:
@@ -576,6 +559,23 @@ def submit_order(request, table_number=None):
             return JsonResponse({'status': 'error', 'message': str(e)})
 
     return JsonResponse({'status': 'error', 'message': 'Μη έγκυρο αίτημα'})
+
+
+
+
+@csrf_exempt
+def list_received_orders(request, tenant):
+    folder_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant}_received_orders')
+
+    if os.path.exists(folder_path):
+        file_list = os.listdir(folder_path)
+        return JsonResponse({'files': file_list})
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Directory not found'}, status=404)
+
+
+
+
 
 
 @csrf_exempt
@@ -724,14 +724,46 @@ def cancel_order(request):
     else:
         return JsonResponse({'status': 'error', 'message': 'Μη έγκυρη μέθοδος αιτήματος'})
 
+
+
+
+@csrf_exempt
+def get_orders_json(request):
+    """
+    Συλλέγει όλες τις παραγγελίες από τα JSON αρχεία σε έναν φάκελο
+    και τις επιστρέφει ως μια λίστα σε JSON απόκριση.
+    """
+    logger.debug("get_orders_json called")
+    orders = []
+    folder_path = 'received_orders'  # Ενημερώστε με τη σωστή διαδρομή
+
+    logger.debug(f"Processing folder: {folder_path}")
+
+    for filename in os.listdir(folder_path):
+        if filename.endswith('.json'):
+            file_path = os.path.join(folder_path, filename)
+            logger.debug(f"Processing file: {file_path}")
+            with open(file_path, 'r') as file:
+                orders.append(json.load(file))
+
+    logger.debug("Completed processing folder")
+    return JsonResponse({'orders': orders})
+
 @csrf_exempt
 def get_orders(request):
-    logger.debug(f"get_orders called")
+    logger.debug("get_orders called")
     # Λογική για την ανάκτηση δεδομένων των παραγγελιών
     orders = Order.objects.all()  # ή οποιαδήποτε άλλη λογική για ανάκτηση παραγγελιών
     order_data = [{'order_id': order.id, 'product_description': order.product_description, 'quantity': order.quantity, 'timestamp': order.timestamp} for order in orders]
     
+    logger.debug(f"Retrieved orders: {order_data}")
     return JsonResponse(order_data, safe=False)
+
+
+
+
+
+
 
 def table_selection_with_time_diff(request):
     tenant = connection.get_tenant()

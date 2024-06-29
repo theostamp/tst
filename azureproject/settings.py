@@ -123,3 +123,40 @@ TEMPLATES = [
 CSRF_TRUSTED_ORIGINS = ['http://localhost:8081']
 CSRF_COOKIE_SECURE = False  # Απενεργοποίησε αν δεν χρησιμοποιείς HTTPS τοπικά
 APPEND_SLASH = False
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'debug.log',
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'azureproject': {  # Αντικαταστήστε με το όνομα της εφαρμογής σας
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'tables.views': {  # Αντικαταστήστε με το όνομα του module σας
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
