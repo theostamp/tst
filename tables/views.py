@@ -866,6 +866,10 @@ def update_time_diff(request, tenant, filename):
         return HttpResponseBadRequest("Invalid request method")
 
 
+
+
+
+
 def order_details(request):
     table_number = request.GET.get('table')
     tenant = request.GET.get('tenant')

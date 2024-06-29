@@ -1,0 +1,13 @@
+{
+    "table_number": 5,
+    "product_description": "\u03a4\u03a1\u0391\u03a7\u0391\u039d\u0391\u03a3",
+    "quantity": "1",
+    "total_cost": 15.0,
+    "waiter": null,
+    "order_done": false,
+    "printed": false,
+    "order_id": "2317321",
+    "timestamp": "2024-06-28 23:17:32",
+    "time_diff": 254,
+    "time_passed": 254
+}
