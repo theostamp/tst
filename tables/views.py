@@ -72,9 +72,13 @@ def signal_refresh_order_summary(request):
         cache.set('refresh_order_summary', True, timeout=90)  # Θέτει τη σημαία για 60 δευτερόλεπτα
     return JsonResponse({'status': 'success'})
 
+
+
+
 @csrf_exempt
 @require_http_methods(["DELETE"])
 def delete_received_orders(request, tenant):
+    logger.debug(f"delete_received_orders called with tenant={tenant}")
     response_data = {
         'checked_files': [],
         'deleted_files': [],
@@ -87,7 +91,7 @@ def delete_received_orders(request, tenant):
     try:
         data = json.loads(request.body)
         order_ids = set(map(str, data.get('order_ids', [])))
-        directory = f'/tenants_folders/{tenant}_received_orders'
+        directory = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant}_received_orders')
 
         if not os.path.exists(directory):
             response_data['errors'].append('Directory not found.')
@@ -129,7 +133,7 @@ def has_write_permission(path):
 
 @csrf_exempt
 def upload_json(request, username):
-    tenant_folder = os.path.join('/workspace/tenants_folders', f'{username}_upload_json')
+    tenant_folder = os.path.join('/workspace/tenants_folders', f'{username}_upload_json/')
     
     if not has_write_permission('/workspace/tenants_folders'):
         logger.error(f"Permission denied for creating directory: /workspace/tenants_folders")
@@ -166,6 +170,11 @@ def upload_json(request, username):
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
+
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
 @never_cache
 @csrf_exempt
 def get_order(request, tenant, filename):
@@ -173,15 +182,27 @@ def get_order(request, tenant, filename):
     Επιστρέφει τα περιεχόμενα ενός συγκεκριμένου JSON αρχείου παραγγελίας
     για τον δοθέν tenant με βάση το όνομα αρχείου που παρέχεται.
     """
-
     logger.debug(f"get_order called with tenant={tenant} and filename={filename}")
     file_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant}_received_orders', filename)
     logger.debug(f"Checking file path: {file_path}")
+
+
+    file_path = '/workspace/tenants_folders/theo_received_orders/order_table_1_813311.json'
+    print(os.path.exists(file_path))  # Πρέπει να εκτυπώνει True αν το αρχείο υπάρχει
+
+        
+    from django.urls import get_resolver
+
+    url_patterns = get_resolver().url_patterns
+    for pattern in url_patterns:
+        print(pattern)
+
     
     if os.path.exists(file_path):
         try:
             with open(file_path, 'r') as file:
                 data = json.load(file)
+                logger.debug(f"File read successfully: {file_path}")
                 return HttpResponse(json.dumps(data), content_type='application/json')
         except json.JSONDecodeError as e:
             logger.error(f"JSON decode error: {e}")
@@ -192,6 +213,9 @@ def get_order(request, tenant, filename):
     else:
         logger.error(f"File not found: {file_path}")
         return JsonResponse({'error': 'File not found', 'file_path': file_path}, status=404)
+
+
+
 
 @csrf_exempt
 def test_read_file(request):
@@ -675,6 +699,8 @@ def update_order(request):
         print(f"General error in update_order: {e}")
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
+
+
 @csrf_exempt
 def delete_order_file(request, filename):
     if request.method == 'DELETE':
@@ -692,6 +718,9 @@ def delete_order_file(request, filename):
             return JsonResponse({'status': 'error', 'message': 'File not found'}, status=404)
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+
+
 
 @csrf_exempt
 def cancel_order(request):
