@@ -131,41 +131,46 @@ def delete_received_orders(request, tenant):
 def has_write_permission(path):
     return os.access(path, os.W_OK)
 
-
 @csrf_exempt
 def upload_json(request, username):
-    tenant_folder = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{username}_upload_json')
+    tenant_folder = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{username}_upload_json/')
     
-    if not os.access('/workspace/tenants_folders', os.W_OK):
+    if not has_write_permission('/workspace/tenants_folders'):
+        logger.error(f"Permission denied for creating directory: /workspace/tenants_folders")
         return JsonResponse({'status': 'error', 'message': 'Permission denied for base directory'}, status=500)
-
+    
     try:
         os.makedirs(tenant_folder, exist_ok=True)
     except PermissionError as e:
+        logger.error(f"Permission denied: {e}")
         return JsonResponse({'status': 'error', 'message': 'Permission denied'}, status=500)
     except Exception as e:
+        logger.error(f"Unexpected error: {e}")
         return JsonResponse({'status': 'error', 'message': 'Unexpected error occurred'}, status=500)
 
     if request.method == 'POST':
         try:
-            if 'file' not in request.FILES:
-                return JsonResponse({'status': 'error', 'message': 'No file part in the request'}, status=400)
+            data = json.loads(request.body)
+            if not isinstance(data, dict) or not data:
+                return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
             
-            uploaded_file = request.FILES['file']
-            file_name = uploaded_file.name
-            file_path = os.path.join(tenant_folder, file_name)
-
-            with open(file_path, 'wb') as file:
-                for chunk in uploaded_file.chunks():
-                    file.write(chunk)
+            for key in data:
+                file_name = f"{key}.json"
+                file_path = os.path.join(tenant_folder, file_name)
+                with open(file_path, 'w') as file:
+                    json.dump(data[key], file, indent=4)
 
             return JsonResponse({'status': 'success'})
         except json.JSONDecodeError:
             return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
         except Exception as e:
+            logger.error(f"Unexpected error: {e}")
             return JsonResponse({'status': 'error', 'message': 'Unexpected error occurred'}, status=500)
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
+
+    
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
