@@ -126,7 +126,6 @@ def delete_received_orders(request, tenant):
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 
-
 def has_write_permission(path):
     try:
         testfile = os.path.join(path, 'testfile')
@@ -160,11 +159,11 @@ def upload_json(request, username):
             if not isinstance(data, dict) or not data:
                 return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
             
-            for key in data:
+            for key, content in data.items():
                 file_name = f"{key}.json"
                 file_path = os.path.join(tenant_folder, file_name)
-                with open(file_path, 'w') as file:
-                    json.dump(data[key], file, indent=4)
+                with open(file_path, 'w', encoding='utf-8') as file:
+                    json.dump(content, file, ensure_ascii=False, indent=4)
 
             return JsonResponse({'status': 'success'})
         except json.JSONDecodeError:
@@ -174,9 +173,6 @@ def upload_json(request, username):
             return JsonResponse({'status': 'error', 'message': 'Unexpected error occurred'}, status=500)
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
-
-
-
     
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
