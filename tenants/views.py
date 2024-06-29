@@ -4,6 +4,16 @@ from .models import Tenant  # Υποθέτοντας ότι το μοντέλο 
 from django.shortcuts import render, redirect
 from .forms import SubscriptionForm
 
+
+from django_tenants.middleware.main import TenantMainMiddleware
+
+class CustomTenantMiddleware(TenantMainMiddleware):
+    def get_tenant(self, model, hostname, request):
+        try:
+            return super().get_tenant(model, hostname, request)
+        except model.DoesNotExist:
+            return model.objects.get(schema_name='public')  # ή ορίστε κάποιον άλλο default tenant
+
 def add_subscription(request):
     if request.method == 'POST':
         form = SubscriptionForm(request.POST)
