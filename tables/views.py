@@ -449,8 +449,6 @@ def process_orders(folder_path, output_file):
 
 
 
-
-
 def order_summary(request):
     schema_name = connection.get_schema()
     tenant = connection.get_tenant()
@@ -482,13 +480,13 @@ def order_summary(request):
                 processed_order_ids.add(order_id)
 
                 if order.get('order_done') == 0:
-                    table_number = order['table_number']
+                    table_number = order.get('table_number')
                     if table_number not in orders_by_table:
                         orders_by_table[table_number] = {'orders': [], 'waiter': order.get('waiter')}
 
                     order_time_str = order.get('timestamp')
                     if order_time_str:
-                        order_time = datetime.strptime(order['timestamp'], "%Y-%m-%d %H:%M:%S")
+                        order_time = datetime.strptime(order_time_str, "%Y-%m-%d %H:%M:%S")
                         if order_time > current_time:
                             order_time -= timedelta(days=1)
                         time_passed = current_time - order_time
@@ -540,6 +538,7 @@ def load_products(tenant):
     except TypeError as e:
         logger.error(f"Type error: {e}")
         return {}
+
 
 
 
@@ -807,8 +806,6 @@ def get_orders(request):
 
 
 
-
-
 def table_selection_with_time_diff(request):
     tenant = connection.get_tenant()
     tenant_name = tenant.name
@@ -828,7 +825,9 @@ def table_selection_with_time_diff(request):
             for table in tables_data:
                 if not isinstance(table, dict):
                     raise TypeError("Expected dict for table")
-                table_number = table['table_number']
+                table_number = table.get('table_number')
+                if table_number is None:
+                    raise ValueError("Table number is missing in the table data")
                 time_diff = get_time_diff_from_file(tenant_name, table_number)
                 table['time_diff'] = time_diff
 
@@ -839,9 +838,16 @@ def table_selection_with_time_diff(request):
     except json.JSONDecodeError as e:
         logger.error(f"Error decoding JSON from {occupied_tables_file}: {e}")
         return HttpResponseNotFound('Error decoding JSON file')
-    except TypeError as e:
-        logger.error(f"Type error: {e}")
-        return HttpResponseNotFound('Type error in JSON file')
+    except (TypeError, ValueError) as e:
+        logger.error(f"Error in JSON data: {e}")
+        return HttpResponseNotFound('Error in JSON data')
+
+
+
+
+
+
+
 
 def get_time_diff_from_file(tenant_name, table_number):
     folder_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant_name}_received_orders')
