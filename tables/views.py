@@ -503,7 +503,6 @@ def load_products(tenant):
 
 
 
-
 @csrf_exempt
 def submit_order(request, table_number=None):
     tenant = connection.get_tenant()
@@ -559,6 +558,7 @@ def submit_order(request, table_number=None):
             return JsonResponse({'status': 'error', 'message': str(e)})
 
     return JsonResponse({'status': 'error', 'message': 'Μη έγκυρο αίτημα'})
+
 
 
 
