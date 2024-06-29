@@ -7,7 +7,7 @@ urlpatterns = [
     path('list_order_files/<str:tenant>/', views.list_order_files, name='list_order_files'),
     path('get_order/<str:tenant>/<str:filename>/', views.get_order, name='get_order_tenant'),
     path('table_selection/', views.table_selection, name='table_selection'),
-    
+    path('tables/table_selection/', views.table_selection, name='table_selection'),
     
     path('order_for_table/<int:table_number>/', views.order_for_table, name='order_for_table'),    
     

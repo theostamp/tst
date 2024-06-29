@@ -34,7 +34,7 @@
             const waiterName = localStorage.getItem('waiterName') || 'unknown'; // Παίρνουμε το όνομα από την τοπική αποθήκευση
 
             setTimeout(function() {
-                window.location.href = `/tables/table_selection?name=${waiterName}`; // Ανακατεύθυνση με το όνομα του σερβιτόρου
+                window.location.href = `/tables/table_selection/?name=${waiterName}`; // Ανακατεύθυνση με το όνομα του σερβιτόρου
             }, 2000); // 2000 milliseconds = 2 δευτερόλεπτα
         });
     </script>
