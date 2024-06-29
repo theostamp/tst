@@ -27,6 +27,12 @@ SHARED_APPS = [
 TENANT_APPS = [
     'tables.apps.TablesConfig',
     # 'django.contrib.contenttypes',  # πρέπει να περιλαμβάνεται και στις δύο λίστες
+     'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
 ]
 
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
