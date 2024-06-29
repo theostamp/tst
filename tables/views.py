@@ -173,6 +173,8 @@ def get_order(request, tenant, filename):
     Επιστρέφει τα περιεχόμενα ενός συγκεκριμένου JSON αρχείου παραγγελίας
     για τον δοθέν tenant με βάση το όνομα αρχείου που παρέχεται.
     """
+
+    logger.debug(f"get_order called with tenant={tenant} and filename={filename}")
     file_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant}_received_orders', filename)
     logger.debug(f"Checking file path: {file_path}")
     
@@ -366,6 +368,7 @@ def get_orders_json(request):
     και τις επιστρέφει ως μια λίστα σε JSON απόκριση.
     """
     print("Η συνάρτηση get_orders_json κλήθηκε.")
+    logger.debug(f"get_orders_json called")
     orders = []
     folder_path = 'received_orders'  # Ενημερώστε με τη σωστή διαδρομή
 
@@ -723,6 +726,7 @@ def cancel_order(request):
 
 @csrf_exempt
 def get_orders(request):
+    logger.debug(f"get_orders called")
     # Λογική για την ανάκτηση δεδομένων των παραγγελιών
     orders = Order.objects.all()  # ή οποιαδήποτε άλλη λογική για ανάκτηση παραγγελιών
     order_data = [{'order_id': order.id, 'product_description': order.product_description, 'quantity': order.quantity, 'timestamp': order.timestamp} for order in orders]

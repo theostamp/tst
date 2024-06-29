@@ -8,10 +8,7 @@ urlpatterns = [
     path('get_order/<str:tenant>/<str:filename>/', views.get_order, name='get_order_tenant'),
     path('table_selection/', views.table_selection, name='table_selection'),
     path('tables/table_selection/', views.table_selection, name='table_selection'),
-    
-    path('order_for_table/<int:table_number>/', views.order_for_table, name='order_for_table'),    
-    
-    
+    path('order_for_table/<int:table_number>/', views.order_for_table, name='order_for_table'),
     path('submit_order/', views.submit_order, name='submit_order'),
     path('order_for_table/<int:table_number>/submit_order/', views.submit_order, name='submit_order_specific'),
     path('success/', views.success, name='success'),
@@ -23,7 +20,7 @@ urlpatterns = [
     path('process-orders/', views.process_orders, name='process_orders'),
     path('delete_order_file/<str:filename>/', views.delete_order_file, name='delete_order_file'),
     path('cancel_order/', views.cancel_order, name='cancel_order'),
-    path('get-orders/', views.get_orders, name='get-orders'),
+    path('get-orders/', views.get_orders, name='get_orders'),
     path('delete_received_orders/<str:tenant>/', views.delete_received_orders, name='delete_received_orders'),
     path('signal_refresh_order_summary/', views.signal_refresh_order_summary, name='signal_refresh_order_summary'),
     path('check_for_refresh/', views.check_for_refresh, name='check_for_refresh'),

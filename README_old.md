@@ -101,7 +101,7 @@ docker-compose logs -f
 cd rest_order
 git init
 git add .
-git commit -m "A6 "
+git commit -m "A7 "
 git remote add origin https://github.com/theostamp/tst.git
 git push -u origin main --force
 
@@ -110,3 +110,6 @@ git add .
 git commit -m "ver 1.0.1"
 git remote add origin https://github.com/theostamp/tst.git
 git push -u origin main
+
+
+https://vscode.dev/tunnel/desktop-ja662go/c:/Users/Notebook
