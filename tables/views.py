@@ -170,7 +170,7 @@ def upload_json(request, username):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
-    
+
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -447,6 +447,10 @@ def process_orders(folder_path, output_file):
     with open(output_file, 'w') as file:
         json.dump(all_orders, file)
 
+
+
+
+
 def order_summary(request):
     schema_name = connection.get_schema()
     tenant = connection.get_tenant()
@@ -467,7 +471,10 @@ def order_summary(request):
             try:
                 with open(file_path, 'r') as file:
                     order = json.load(file)
-                
+
+                if not isinstance(order, dict):
+                    raise TypeError("Expected dict for order")
+
                 order_id = order.get('order_id')
                 if order_id in processed_order_ids:
                     continue
@@ -498,11 +505,14 @@ def order_summary(request):
                         product_id = str(product['id'])
                         product_info = products_dict.get(product_id, {})
                         product['name'] = product_info.get('description', 'Unknown Product')
-                    
+
                     orders_by_table[table_number]['orders'].append(order)
 
             except json.JSONDecodeError as e:
-                print(f"Σφάλμα κατά την ανάγνωση του JSON: {e}")
+                logger.error(f"Σφάλμα κατά την ανάγνωση του JSON: {e}")
+                continue
+            except TypeError as e:
+                logger.error(f"Type error: {e}")
                 continue
 
     # Ταξινόμηση των τραπεζιών βάσει του μεγαλύτερου χρόνου αναμονής
@@ -518,12 +528,18 @@ def load_products(tenant):
     if not os.path.exists(products_file):
         return {}
 
-    with open(products_file, 'r') as file:
-        products_data = json.load(file)
-        return {str(product['id']): product for product in products_data}
-
-
-
+    try:
+        with open(products_file, 'r') as file:
+            products_data = json.load(file)
+            if not isinstance(products_data, list):
+                raise TypeError("Expected list of products")
+            return {str(product['id']): product for product in products_data}
+    except json.JSONDecodeError as e:
+        logger.error(f"Error decoding JSON from {products_file}: {e}")
+        return {}
+    except TypeError as e:
+        logger.error(f"Type error: {e}")
+        return {}
 
 
 
@@ -793,7 +809,6 @@ def get_orders(request):
 
 
 
-
 def table_selection_with_time_diff(request):
     tenant = connection.get_tenant()
     tenant_name = tenant.name
@@ -807,8 +822,12 @@ def table_selection_with_time_diff(request):
     try:
         with open(occupied_tables_file, 'r') as file:
             tables_data = json.load(file)
+            if not isinstance(tables_data, list):
+                raise TypeError("Expected list of tables")
 
             for table in tables_data:
+                if not isinstance(table, dict):
+                    raise TypeError("Expected dict for table")
                 table_number = table['table_number']
                 time_diff = get_time_diff_from_file(tenant_name, table_number)
                 table['time_diff'] = time_diff
@@ -820,6 +839,9 @@ def table_selection_with_time_diff(request):
     except json.JSONDecodeError as e:
         logger.error(f"Error decoding JSON from {occupied_tables_file}: {e}")
         return HttpResponseNotFound('Error decoding JSON file')
+    except TypeError as e:
+        logger.error(f"Type error: {e}")
+        return HttpResponseNotFound('Type error in JSON file')
 
 def get_time_diff_from_file(tenant_name, table_number):
     folder_path = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant_name}_received_orders')
@@ -846,6 +868,11 @@ def get_time_diff_from_file(tenant_name, table_number):
                 continue
 
     return 'N/A'
+
+
+
+
+
 
 def get_occupied_tables(request, tenant):
     tenant_folder = os.path.join(settings.BASE_DIR, 'tenants_folders', f'{tenant}_upload_json')
