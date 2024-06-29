@@ -127,9 +127,15 @@ def delete_received_orders(request, tenant):
 
 
 
-
 def has_write_permission(path):
-    return os.access(path, os.W_OK)
+    try:
+        testfile = os.path.join(path, 'testfile')
+        with open(testfile, 'w') as f:
+            pass
+        os.remove(testfile)
+        return True
+    except (IOError, OSError):
+        return False
 
 @csrf_exempt
 def upload_json(request, username):
@@ -171,7 +177,7 @@ def upload_json(request, username):
 
 
 
-
+    
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 
